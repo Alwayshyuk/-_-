@@ -51,6 +51,8 @@ try {
 
 > 호출스택에 대한 정보와 예외 메시지를 출력한다.
 
+--------------------------
+
 # 멀티 catch블럭
 * JDK1.7부터 여러 catch블럭을 '|' 기호를 통해서 하나의 catch블럭으로 합칠 수 있게 되었다.
 ```java
@@ -90,8 +92,115 @@ void method( ) throws Exception { ... }
 > JAVA API 문서를 통해 사용하고자 하는 메서드의 선언부와 'Throws'를 보고,   
 > 이 메서드에서는 어떤 예외가 발생할 수 있으며 반드시 처리해주어야 하는 예외는 어떤 것들이 있는지 확인하는 것이 좋다.   
 
+----------------------------
 
+# finally 블럭
+> 예외의 발생여부에 상관없이 실행되어야할 코드를 포함시킬 목적으로 사용된다.   
+> try-catch문의 끝에 선택적으로 덧붙여 사용할 수 있으며,   
+> try-catch-finally의 순서로 구성된다.
 
+```java
+	try {
+		//예외가 발생할 가능성이 있는 문장들을 넣는다.
+	} catch (Exception1 e1) {
+		//예외처리를 위한 문장을 넣는다.
+	} finally {
+	 	//예외의 발생여부에 관계없이 항상 수행되어야하는 문장들을 넣는다.
+		//finally 블럭은 try-catch문의 맨 마지막에 위치해야한다.
+	}
+```
 
- 
+> 예외가 발생한 경우에는 try-catch-finally순으로 실행되고,    
+> 예외가 발생하지 않은 경우에는 try-finally순으로 실행된다.
 
+--------------------------
+
+# 자동 자원 반환 -try-with-resources문
+> 어렵다...15장 후에 다시 보자.
+
+-----------------------
+
+# 사용자정의 예외 만들기
+```java
+class MyException extends Exception {
+	MyException (String msg) {
+		super(msg);
+	}
+}
+```
+> 보통 위와 같이 Exception클래스 또는 RuntimeException클래스로부터 상속받아 클래스를 만들지만,   
+> 필요에 따라서 알맞은 예외 클래스를 선택할 수 있다.    
+#### 가능하면 새로운 예외 클래스를 만들기보다 기존의 예외클래스를 활용하자.
+
+```java
+class MyException extends Exception {
+
+	// 에러 코드 값을 저장하기 위한 필드를 추가 했다.
+	private final int ERR_CODE;	//생성자를 통해 초기화한다.
+	
+	
+	MyException (String msg, int errCode) {		//생성자
+		super(msg);
+		ERR_CODE = errCode;
+	}
+	
+	MyException (String msg) {	//생성자
+		this(msg, 100);		//ERR_CODE를 기본값(100)으로 초기화한다.
+	}
+	public int getErrCode() {	//에러 코드를 얻을 수 있는 메서드
+		return ERR_CODE;	//이 메서드는 주로 getMessage()와 함께 사용된다.
+	}
+}
+```
+
+--------------------
+
+# 예외 던지기
+* 예외를 처리한 후에 인위적으로 다시 발생시키는 방법.   
+> 하나의 예외에 대해서 예외가 발생한 메서드와 이를 호출한 메서드 양쪽 모두에서 처리해줘야 할 작업이 있을 때 사용한다.   
+
+```java
+try{
+	method1();
+	} catch (Exception e) {
+		System.out.println("main 메서드에서 예외가 처리되었습니다");
+	}
+}
+static void method1() throws Exception{
+	try {
+		throw new Exception();
+		} catch (Exception e) {
+		System.out.println("method1 메서드에서 예외가 처리되었습니다")
+		throw e;		//다시 예외를 발생시킨다.
+		}
+	}
+}
+method1 메서드에서 예외가 처리되었습니다
+main 메서드에서 예외가 처리되었습니다
+```
+> 반환값이 있는 return문의 경우 try 블럭과 catch 블럭 모두에 return문이 있어야 한다.   
+> 또는 catch블럭에서 예외 되던지기를 해서 호출한 메서드로 예외를 전달하면, return문이 없어도 된다.
+> finally블럭 내에서도 return문을 사용할 수 있다. 이 경우 최종적으로 finally블럭 내의 return문의 값이 반환된다.
+
+-------------------------------------
+
+# 연결된 예외
+> 한 예외가 다른 예외를 발생시킬 수 있다.   
+> 예외 A가 예외 B를 발생시켰다면, A를 B의 '원인 예외'라고 한다.
+
+```java
+try {
+	startInstaller();	//SpaceException 발생
+	copyFiles();
+	} catch (SpaceException e) {
+	InstallException ie = new InstallException ("설치중 예외발생");	//예외 생성
+	ie.initCause(e); 		// InstallException의 원인 예외를 SpaceException으로 지정
+	throw ie;			//InstallException을 발생시킨다.
+	} catch ( ...
+```
+#### Trowable initCause (Throwable cause) - 지정한 예외를 원인 예외로 등록.   
+#### Throwable getCause( ) - 원인 예외를 반환.
+
+## 원인 예외로 등록해서 다시 예외를 발생시키는 이유   
+* 여러가지 예외를 하나의 큰 분류의 예외로 묶어서 다루기 위해
+* checked예외를 unchecked예외로 바꿀 수 있도록 하기 위해 
