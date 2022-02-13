@@ -506,3 +506,55 @@ String Date = String.valueOf(dd);
 ```
 > 지정된 값을 문자열로 변환하여 반환한다.   
 > 참조변수의 경우, toString()을 호출한 결과를 반환한다.
+
+## join()과 StringJoiner
+```java
+String animals = "dog, cat, bear";
+String[] arr = animals.split(",");
+String str = String.join("-", arr);    //arr = "dog-cat-bear"
+```
+> Join은 여러 문자열 사이에 구분자를 넣어서 결합한다.
+
+```java
+StringJoiner sj = new StringJoiner(",", "[", "]");
+String[] strArr = { "aaa", "bbb", "ccc"};
+
+for(int i = 0; i<strArr.length; i++)
+	sj.add(strArr[i]);
+  
+  System.out.println(sj.toString());    //[aaa,bbb,ccc]
+```
+> java.util.StringJoiner클래스를 사용해서 문자열을 결합할 수 있다.
+
+## 유니코드의 보충문자
+> 유니코드는 원래 2byte, 즉 16비트 문자체계인데, 모자라서 20비트로 확장하게 되었다.   
+> 그래서 하나의 문자를 char타입으로 다루지 못하고, int타입으로 다룰 수 밖에 없다.   
+> 이 확장에 의해 새로 추가된 문자들을 보충문자라고 한다.
+
+## 문자 인코딩 변환
+> getBytes(String charsetName)를 사용하면, 문자열의 문자 인코딩을 다른 인코딩으로 변경할 수 있다.
+
+```java
+byte[] utf8_str = "가".getBytes("UTF-8");      //문자열을 UTF_8로 변환.
+String str = new String(utf8_str, "UTF-8");    //byte배열을 문자열로 변환.
+```
+> 서로 다른 문자 인코딩을 사용하는 컴퓨터 간에 데이터를 주고받을 때는 적절한 문자 인코딩이 필요하다.
+
+## String.format()
+> 형식화된 문자열을 만들어내는 방법이다.
+
+```java
+String str = String.format("%d 더하기 %d는 %d입니다.", 3, 5, 3+5);     //3 더하기 5는 8입니다.
+```
+
+## 기본형 값을 String으로 변환
+
+```java
+int i = 100;
+String str1 = i + "" ;
+String str2 = String.valueOf(i);
+```
+> 성능은 valueOf가 더 좋으므로 성능향상이 필요할 때는 valueOf를 사용하자.
+
+## String을 기본형 값으로 변환
+
