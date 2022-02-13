@@ -268,7 +268,7 @@ String s = new String(sb);
 char charAt(int index)
 
 String s = "Hello";
-char c = s.charAt(1);   //e
+char c = s.charAt(1);   // c = 'e'
 ```
 > 지정된 위치(index)에 있는 문자를 알려준다.(0부터 시작)
 
@@ -365,3 +365,144 @@ boolean b3 = (s.intern() == s2.intern());     // b3 = true
 ```
 > 문자열을 상수풀constant pool에 등록한다.      
 > 이미 상수풀에 같은 내용의 문자열이 있을 경우 그 문자열의 주소값을 반환한다.
+
+```java
+int lastIndexOf (char ch)
+
+String s = "java.lang.Object";
+int idx1 = s.lastIndexOf('.');    //idx1 = 9
+int idx2 = s.indexOf('.');        //idx2 = 4
+```
+> 지정된 문자 또는 문자코드를 문자열의 오른쪽 끝에서부터 찾아서 위치(index)를 반환한다.
+> 못 찾으면 -1을 반환한다.
+
+```java
+int length()
+
+String s = "Hello";
+int length = s.length();    //length = 5;
+```
+> 문자열의 길이를 알려준다.
+
+```java
+String replace (char old, char new)
+
+String s = "Hello";
+String s1 = s.replace('H', 'C')   //s1 = "Cello"
+```
+> 문자열 중의 문자old를 새로운 문자nw로 바꾼 문자열을 반환한다.
+
+```java
+String replace(CharSequence old, CharSequence nw)
+
+String s = "Hellollo";
+String s1 = s.replace("ll", "LL");    //s1 = "HeLLoLLo"
+```
+> 문자열 중의 문자열old을 새로운 문자열nw로 모두 바꾼 문자열을 반환한다.
+
+```java
+String replaceAll(String regex, String replacement)
+
+String ab = "AABBAABB";
+String r = ab.replaceAll("BB", "bb")    //r = "AAbbAAbb"
+```
+> 문자열 중에서 지정된 문자열regex과 일치하는 것을 새로운 문자열replacement로 모두 변경한다.
+
+```java
+String replaceFirst(Strng regex, String replcement)
+
+String ab = "AABBAABB";
+String r = ab.replaceFirst("BB", "bb")    // r = "AAbbAABB"
+```
+> 문자열 중에서 지정된 문자열regex과 일치하는 것 중, 첫 번째 것만 새로운 문자열replacement로 변경한다.
+
+```java
+String [] split(String regex)
+
+String animals = "dog, cat, bear";
+String [] arr = animals.split(",");   //arr[0] = "dog", arr[1] = "cat", arr[2] = "bear"
+```
+> 문자열을 지정된 분리자regex로 나누어 문자열 배열에 담아 반환한다.
+
+```java
+String [] split (String regex, int limit) 
+
+String animals = "dog, cat, bear";
+String [] arr = animals.split(",", 2);    //arr[0] = "dog", arr[1] = "cat,bear"
+```
+> 문자열을 지정된 분리자regex로 나누어 문자열배열에 담아 반환한다.   
+> 단, 문자열 전체를 지정된 수limit로 자른다.   
+
+```java
+boolean startsWith (String prefix)
+
+String s = "java.lang.Object";
+boolean b = s.startsWith("java");     // b = true
+boolean b2 = s.startsWith("lang");    // b2 = false
+```
+> 주어진 문자열prefix로 시작하는지 검사한다.
+
+```java
+String substring (int begin)
+String substring (int begin, int end)
+
+String s = "java.lang.Object";
+String c = s.substring(10);     // c = "Object"
+String p = s.substring(5, 9);   // p = "lang"
+```
+> 주어진 시작위치begin부터 끝 위치end 범위에 포함된 문자열을 얻는다.    
+> 시작위치의 문자는 포함되지만 끝 위치의 문자는 포함되지 않는다.    
+
+```java
+String toLowerCase()
+
+String s = "Hello";
+String s1 = s.toLowerCase();    //s1 = "hello"
+```
+>String인스턴스에 저장되어있는 모든 문자열을 소문자로 변환하여 반환한다.
+
+```java
+String toString();
+
+String s = "Hello";
+String s1 = s.toString();   // s1 = "Hello"
+```
+> String인스턴스에 저장되어 있는 문자열을 반환한다.
+
+```java
+String toUpperCase()
+
+String s = "Hello";
+String s1 = s.toUpperCase();    // s1 = "HELLO"
+```
+> String인스턴스에 저장되어있는 모든 문자열을 대문자로 변환하여 반환한다.
+
+```java
+String trim()
+
+String s = "    Hello World   ";
+String s1 = s.trim();   // s1 = Hello World
+```
+> 문자열의 왼쪽 끝과 오른쪽 끝에 있는 공백을 없앤 결과를 반환한다.    
+> 문자열 중간에 있는 공백은 제거되지 않는다.    
+
+```java
+static String valueOf(boolean b)
+static String valueOf(char c)
+static String valueOf(int i)
+static String valueOf(long l)
+static String valueOf(float f)
+static String valueOf(double d)
+static String valueOf(Object o)
+
+String b = String.valueOf(true);            // b = "true"
+String c = String.valueOf('a');             // c = "a"
+String i = String.valueOf(100);             // i = "100"
+String l = String.valueOf(100L);            // l = "100"
+String f = String.valueOf(10f);             // f = "10.0"
+String d = String.valueOf(10.0);            // d = "10.0"
+java.util.Date dd = new java.util.Date();   // date = "날짜"
+String Date = String.valueOf(dd);
+```
+> 지정된 값을 문자열로 변환하여 반환한다.   
+> 참조변수의 경우, toString()을 호출한 결과를 반환한다.
