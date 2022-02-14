@@ -920,5 +920,64 @@ double d2 = Math.round(d*100)/100.0	// d2 = 90.76
 > 소수점 첫째자리에서 반올림한 정수값long을 반환한다.   
 > 매개변수의 값이 음수인 경우, round()와 rint()의 결과가 다르다는 것에 주의하자.
 
+---------------------------------------------
+
 # 래퍼wrapper 클래스
-> 
+> 기본형 값을 객체로 다룰 수 있게 해주는 클래스
+```java
+Boolean b = new boolean(true);
+Character c = new Character('a');
+Integer i = new Integer(100);
+Integer i2 = new Integer("100");
+```
+> char형과 int형을 제외한 나머지는 자료형 이름의 첫 글자를 대문자로 한 것이 각 래퍼 클래스의 이름이다.     
+> 래퍼 클래스의 생성자는 매개변수로 문자열이나 각 자료형의 값들을 인자로 받는다.    
+
+```java
+Integer i = new Integer(100);
+Integer i2 = new Integer(100);
+
+i == i2			//false
+i.equals(i2)		//true
+i.compareTo(i2)		//0
+i.toString()		//100
+
+Integer.MAX_VALUE	//2147483647
+Integer.MIN_VALUE	//-2147483648
+Integer.SIZE		//32
+Integer.BYTES		//4
+Integer.TYPE		//int
+```
+> 래퍼 클래스들은 모두 equals()가 오버라이딩되어 있어서 주소값이 아닌 객체가 가지고 있는 값을 비교한다.     
+> 오토박싱이 된다고 해도 Integer객체에 비교연산자를 사용할 수 없고, 대신 compareTo()를 제공한다.     
+
+#### Number 클래스
+> Number클래스는 추상클래스로 내부적으로 숫자를 멤버변수로 갖는 래퍼 클래스들의 조상이다.     
+> 그 외에도 BigInteger와 BigDemical 등이 있다.     
+> BigInteger는 long으로도 다룰 수 없는 큰 범위의 정수를,      
+> BigDemical은 double로도 다룰 수 없는 큰 범위의 부동 소수점수를 처지하기 위한 것으로 연산자의 역할을 대신하는 다양한 메서드를 제공한다.   
+
+#### 문자열을 숫자로 변환하기
+```java
+int i = new Integer("100").intValue();		//floatValue(), longValue()...
+int i2 = Integer.parseInt("100");		//주로 이 방법을 많이 사용, 반환값이 기본형
+Integer i3 = Integer.valueOf("100");		//반환값이 래퍼 클래스 타입
+int i4 = Integer.parseInt("100", 2);		//100(2) = 4
+```
+> 오토박싱 기능으로 반환값이 기본형일 때와 래퍼 클래스일 때의 차이는 없어졌다.    
+> 다만 성능은 valueOf()가 조금 더 느리다.    
+> 다른 진법의 숫자일 때도 변환이 가능하다.    
+
+#### 오토박싱 & 언박싱
+> 기본형 값을 래퍼 클래스의 객체로 자동 변환해주는 것을 '오토박싱'이라고 하고,    
+> 반대로 변환하는 것을 '언박싱'이라고 한다.   
+```java
+int i = 5;
+Integer iobj = new Integer(7);
+int sum = i + iobj;
+
+ArrayList<Integer> list = new ArrayList<Integer>();		//Vector클래스에서도 가능하다.
+list.add(10);			//오토박싱. 10 -> new Integer(10)
+int value = list.get(0);	//언박싱. new Integer(10) -> 10
+```
+
