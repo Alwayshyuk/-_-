@@ -558,3 +558,367 @@ String str2 = String.valueOf(i);
 
 ## String을 기본형 값으로 변환
 
+```java
+int i = Integer.parseInt("100");	//"100"을 100으로 변환.
+int i2 = Integer.valueOf("100");	//"100"을 100으로 변환.
+int i3 = Integer.parseInt(" 123  ",trim());	// 문자열 양 끝의 공백을 제거 후 변환.
+```
+> 문자열 양 끝에 공백이 있을 수 있어 trim()을 습관처럼 사용하는 것이 좋다.
+
+## StringBuffer클래스와 StringBuilder클래스
+> String클래스는 인스턴스를 생성할 때 지정된 문자열을 변경할 수 없지만 StringBuffer클래스는 변경이 가능하다.    
+> 내부적으로 문자열 편집을 위한 버퍼buffer를 가지고 있으며 StringBuffer인스턴스를 생성할 때 그 크기를 지정할 수 있다.    
+> StringBuffer인스턴스가 생성될 때, char형 배열이 생성되며 이를 인스턴스변수 value가 참조하게 된다.    
+
+#### StringBuffer의 생성자
+```java
+public StringBuffer (int length) {
+	value = new char[length];
+	shared = false;
+}
+public StringBuffer() {			//버퍼의 크기를 지정하지 않으면 16이 된다.
+	this(16);
+}
+public StringBuffer(String str) {
+	this(str.length() + 16);	//지정한 문자열의 길이보다 16이 더 크게 버퍼를 생성한다.
+	append(str);
+}
+```
+
+#### StringBuffer 크기 변경
+```java
+char newValue[] = new char[newCapacity];
+
+System.arraycopy(value, 0, newvalue, 0, count);
+value = new value;
+```
+
+#### StringBuffer의 변경
+```java
+StringBuffer sb = new StringBuffer("ABC");
+sb.append("123");
+sb.append("456").append("ZZ");
+```
+> append()는 반환타입이 StringBuffer이여서 연속적으로 append()를 호출하는 것이 가능하다.
+
+#### StringBuffer의 비교
+```java
+StringBuffer sb = new StringBuffer("123");
+StringBuffer sb2 = new StringBuffer("123");
+
+System.out.println(sb == sb2);		//false
+System.out.println(sb.equals(sb2));	//false
+
+String s = sb.toString();
+String s = sb2.toString();
+
+System.out.println(sb.equals(sb2));	//true
+```
+> String클래스에서는 equals메서드를 오버라이딩해서 문자열의 내용을 비교하도록 구현되어 있지만,    
+> StringBuffer클래스는 equals메서드를 오버라이딩하지 않아서 StringBuffer클래스의 equals메서드를 사용해도   
+> 등가비교연산자( == )로 비요한 것과 같은 결과를 얻는다.     
+> 반면에 toString()은 오버라이딩되어 있어서 StringBuffer인스턴스에 toString()을 호출하면, 담고있는 문자열을 String으로 반환한다.     
+> 그래서 StringBuffer인스턴스에 담긴 문자열을 비교하기 위해서는 toString을 호출해서 String클래스를 얻은 다음,    
+> 여기에 equals메서드를 사용해서 비교해야한다.
+
+#### StringBuffer클래스의 생성자와 메서드
+
+```java
+StringBuffer()
+
+StringBuffer sb = new StringBuffer();
+```
+> 16문자를 담을 수 있는 버퍼를 가진 StringBuffer 인스턴스를 생성한다.
+
+
+```java
+StringBuffer(int length)
+
+StringBuffer sb = new StringBuffer(10);
+```
+> 지정된 개수의 문자를 담을 수 있는 버퍼를 가진 StringBuffer인스턴스를 생성한다.
+
+
+```java
+StringBuffer(String str)
+
+StringBuffer sb = new StringBuffer("Hi");	//sb = "Hi"
+```
+> 지정된 문자열 값str을 갖는 StringBuffer 인스턴스를 생성한다.
+
+
+```java
+StringBuffer append(boolean b)
+StringBuffer append(char c)
+StringBuffer append(char[] str)
+StringBuffer append(double d)
+StringBuffer append(float f)
+StringBuffer append(int i)
+StringBuffer append(long l)
+StringBuffer append(Object obj)
+StringBuffer append(String str)
+
+StringBuffer sb = new StringBuffer("abc");
+StringBuffer sb2 = sb.append(true);			//sb = "abctrued10.0ABC123"
+sb.append('d').append(10.0f);				//sb2 = "abctrued10.0ABC123"
+StringBuffer sb3 = sb.append("ABC").append(123);	//sb3 = "abctrued10.0ABC123"  모두 같은 객체 참조
+```
+> 매개변수로 입력된 값을 문자열로 변환하여 StringBuffer인스턴스가 저장하고 있는 문자열의 뒤에 덧붙인다.
+
+
+```java
+int capacity()
+
+StringBuffer sb = new StringBuffer(100);
+sb.append("abcd");
+int bufferSize = sb.capacity();		//bufferSize = 100
+int stringSize = sb.length();		//stringSize = 4
+```
+> StringBuffer인스턴스의 버퍼크기를 알려준다. length()는 버퍼에 담긴 문자열의 길이를 알려준다.
+
+
+```java
+char charAt(int index)
+
+String buffer sb = new StringBuffer("abc");
+char c = sb.charAt(2);				// c = 'c' 
+```
+> 지정된 위치index에 있는 문자를 반환한다.
+
+```java
+StringBuffer delete(int start, int end)
+
+StringBuffer sb = new StringBuffer("0123456");		//sb = "0126"
+StringBuffer sb2 = sb.delete(3, 6);			//sb2 = "0126"
+```
+> 시작위치start부터 끝 위치end 사이에 있는 문자를 제거한다. 단, 끝 위치는 제외.
+
+```java
+StringBuffer deleteCharAt(int index)
+
+StringBuffer sb = new StringBuffer("0123456");
+sb.deleteCharAt(3);					//sb = "012456"
+```
+> 지정된 위치index의 문자를 제거한다.
+
+```java
+StringBuffer insert(int pos, boolean b)
+StringBuffer insert(int pos, char c)
+StringBuffer insert(int pos, char[] str)
+StringBuffer insert(int pos, double d)
+StringBuffer insert(int pos, float f)
+StringBuffer insert(int pos, int i)
+StringBuffer insert(int pos, long l)
+StringBuffer insert(int pos, Object obj)
+StringBuffer insert(int pos, String str)
+
+StringBuffer sb = new StringBuffer("0123456");
+sb.insert(4, '.');					//sb = "0123.456")
+```
+> 두 번째 매개변수로 받은 값을 문자열로 변환하여 지정된 위치 pos에 추가한다. pos는 0부터 시작.
+
+```java
+int length()
+
+StringBuffer sb = new StringBuffer("0123456");
+int length = sb.length();					//length = 7
+```
+> StringBuffer인스턴스에 저장되어 있는 문자열의 길이를 반환한다.
+
+```java
+StringBuffer replace(int start, int end, String str)
+
+StringBuffer sb = new StringBuffer("0123456"
+sb.replace(3, 6, "AB");						//sb = "012AB6"
+```
+> 지정된 범위 start~end의 문자들을 주어진 문자열로 바꾼다.    
+> end위치의 문자는 범위에 포함되지 않는다.
+
+
+```java
+StringBuffer reverse()
+
+StringBuffer sb = new StringBuffer("0123456");
+sb.reverse();							//sb = "6543210"
+```
+> StringBuffer인스턴스에 저장되어 있는 문자열의 순서를 거꾸로 나열한다.
+
+
+```java
+void setCharAt(int index, char ch)
+
+StringBuffer sb = new StringBuffer("0123456");
+sb.setCharAt(5, 'o');						//sb = "01234o6"
+```
+> 지정된 위치의 문자를 주어진 문자ch로 바꾼다.
+
+
+```java
+void setLength(int newLength)
+
+StringBuffer sb = new StringBuffer("0123456");
+sb.setLength(5);						//sb = "01234"
+
+stringBuffer sb2 = new StringBuffer("0123456");
+sb2.setLength(10);						//sb2 = "0123456    "
+Stirng str = sb2.toString().trim();				//str = "0123456"
+```
+> 지정된 길이로 문자열의 길이를 변경한다.     
+> 길이를 늘리는 경우에 나머지 빈 공간을 널문자 '\n0000'로 채운다.     
+
+
+```java
+String toString()
+
+StringBuffer sb = new StringBuffer("0123456");
+String str = sb.toString();					//str = "0123456"
+```
+> stringBuffer인스턴스의 문자열을 String으로 반환.
+
+
+```java
+String substring(int start)
+String substring(int start, int end)
+
+StringBuffer sb = new StringBuffer("0123456");
+String str = sb.substring(3);					//str = "3456"
+String str2 = sb.substring(3, 5);				//str2 = "34"
+```
+> 지정된 범위 내의 문자열을 String으로 뽑아서 반환한다.    
+> 시작위치start만 지정하면 시작위치부터 문자열 끝까지 반환한다.    
+
+#### StringBuilder란?
+> StringBuffer는 멀티쓰레드에 안전(thread safe)하도록 동기화되어있다.   
+> 멀티쓰레드로 작성된 프로그램이 아닌 경우, StringBuffer의 동기화는 불필요하게 성능을 떨어뜨린다.     
+> StringBuilder는 StringBuffer와 완전히 똑같은 기능으로 작성되어 있어서,     
+> 소스코드에서 StringBuffer타입의 참조변수를 선언한 부분과 StringBuffer의 생성자만 바꾸면 된다.    
+
+# Math클래스
+> Math클래스의 생성자는 접근 제어자가 private이기 때문에 다른 클래스에서 Math인스턴스를 생성할 수 없다.     
+> 클래스 내에 인스턴스변수가 하나도 없어서 인스턴스를 생성할 필요가 없기 때문이다.   
+> Math클래스의 메서드는 모두 static이며, 자연로그 E와 원주율 3.14- 만 상수로 정의해 놓았다.
+
+#### 올림, 버림, 반올림
+
+```java
+double a = 90.7552;
+double b = a*100;		//b = 9075.52
+double c = Math.round(b);	//c = 9076
+double d = c/100;		//d = 90.76
+```
+> round()메서드는 항상 소수점 첫째자리에서 반올림을 해서 정수값long을 결과로 돌려준다.
+
+```java
+double d = Math.ceil(1.1);	//올림   d = 2.0
+double d = Math.floor(1,5);	//버림   d = 1.0
+double d = Math.round(1.1);	//반올림 d = 1
+double d = Math.round(1.5);	//반올림, 반환값이 int d = 2
+double d = Math.rint(1.5);	//반올림, 반환값이 double d, 가운데 값은 가까운 짝수 정수를 반환 = 2.000000
+double d = Math.round(-1.5);	//반올림 d = -1
+double d = Math.rint(-1.5);	//반올림, 반환값이 double d, 가운데 값은 가까운 짝수 정수를 반환 = -2.000000
+double d = Math.ceil(-1.5);	//올림   d = -1.0
+double d = Math.floor(-1.5);	//버림   d = -2.0
+```
+
+#### 예외를 발생시키는 메서드
+> 메서드 이름에 Exact가 포함된 메서드들은 정수형간의 연산에서 발생할 수 있는 오버플로우를 감지하기 위한 것이다.
+```java
+int addExact (int x, int y)		//x + y
+int subtractExact( int x, int y)	//x - y
+int multipleExact ( int x, int y)	//x * y
+int incrementExact (int a)		//a++
+int decrementExact (int a)		//a--
+int negateExact (int a)			//-a
+int toIntExact (long value)		//(int)value  int로의 형변환
+```
+> 이 메서드들은 오버플로우가 발생하면, 예외ArithmeticException를 발생시킨다.
+
+#### StrictMath클래스
+> 성능을 다소 포기하고, 어떤 OS에서 실행되어도 항상 같은 결과를 얻도록 Math클래스를 새로 작성한 클래스이다.
+
+#### Math클래스의 메서드
+```java
+static double abs (double a)
+static float abs (float f)
+static int abs (int f)
+static long abs (long f)
+
+int i = Math.abs(-10);			// i = 10
+double d = Math.abs(-10.0);		// d = 10.0
+```
+> 주어진 값의 절대값을 반환한다.
+
+```java
+static double ceil(double a)
+
+double d = Math.ceil(10.1);		// d = 11.0
+double d2 = Math.ceil(-10.1);		// d2 = -10.0
+double d3 = Math.ceil(10.000015);	// d3 = 11.0
+```
+> 주어진 값을 올림하여 반환한다.
+
+```java
+static double floor(double a)
+
+double d = Math.floor(10.8);		// d = 10.0
+double d2 = Math.floor(-10.8);		// d2 = -11.0
+```
+> 주어진 값을 버림하여 반환한다.
+
+```java
+static double max(double a, double b)
+static float max(float a, float b)
+static int max(int a, int b)
+static long max(long a, long b)
+
+double d = Math.max(9.5, 9.500001);	// d = 9.500001
+int i = Math.max(0, -1);		// i = 0
+```
+> 주어진 두 값을 비교하여 큰 쪽을 반환한다.
+
+```java
+static double min(double a, double b)
+static float min(float a, float b)
+static int min(int a, int b)
+static long min(long a, long b)
+
+double d = Math.min(9.5, 9.500001);	// d = 9.5
+int i = Math.min(0, -1);		// i = -1
+```
+> 주어진 두 값을 비교하여 작은 쪽을 반환한다.
+
+```java
+static double random()
+
+double d = Math.random();		// 0.0 <= d < 1.0
+int i = (int)(Math.random()*10)+1;	// 0<= i < 11
+```
+> 0.0~1.0범위의 임의의 double값을 반환한다.
+
+```java
+static double rint(double a)
+
+double d = Math.rint(1.2);		// d = 1.0
+double d2 - Math.rint(2.6);		// d2 = 3.0
+double d3 = Math.rint(3.5);		// d3 = 4.0
+double d4 = Math.rint(4.5);		// d4 = 4.0
+```
+> 주어진 double값과 가장 가까운 정수값을 double형으로 반환한다.    
+> 단, 두 정수의 정가운데 있는 값(.5)은 짝수를 반환.
+
+```java
+static long round(double a)
+static long round(float a)
+
+long l = Math.round(1.2);		// l = 1
+long l2 = Math.round(2.6);		// l2 = 3
+long l3 = Math.round(3.5);		// l3 = 4
+long l4 = Math.round(4.5);		// l4 = 5
+double d = 90.7552;
+double d2 = Math.round(d*100)/100.0	// d2 = 90.76
+```
+> 소수점 첫째자리에서 반올림한 정수값long을 반환한다.   
+> 매개변수의 값이 음수인 경우, round()와 rint()의 결과가 다르다는 것에 주의하자.
+
+# 래퍼wrapper 클래스
+> 
