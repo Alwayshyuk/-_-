@@ -1209,15 +1209,80 @@ public class Main {
 		}
 	return result + tmpResult + num;
 }
-		
-	
-
 }
 
 ```
+```java
+String result = data.split(",");
+StringTokenizer st = new StringTokenizer(data, ",");
+```
+> split()은 빈 문자열도 토큰으로 인식하는 반면, StringTokenizer는 빈 문자열은 토큰으로 인식하지 않는다.      
+> split()은 데이터를 토큰으로 잘라낸 결과를 배열에 담아 반환하고    
+> StringTokenizer는 데이터를 토큰으로 잘라서 바로 반환하여 성능이 더 뛰어나다.
 
+## java.math.BigInteger 클래스
+> BigInteger는 내부적으로 int배열을 사용하여 long 타입보다 훨씬 큰 값을 다룬다. 대신 성능은 떨어진다.
+```java
+final int signum;	//부호. 1, 0, -1 셋 중 하나
+final int[] mag		//값 magnitude 
+```
+> 코드에서 알 수 있듯이, BigInteger는 String처럼 불변immutable 이다.    
+> 부호를 따로 저장하고 배열에는 값 자체만 저장한다. 2의 보수.
 
+#### BigInteger의 생성
+> 문자열로 숫자를 표현하는 것이 일반적이다.     
+> 정수형 리터럴로는 표형할 수 있는 값의 한계가 있기 때문이다.
 
+```java
+BigInteger val = new BigInteger("12345678901234567890");	//문자열로 생성
+BigInteger val = new BigInteger("FFFF", 16);			//n진수radic의 문자열로 생성
+BigInteger val = new BigInteger(1234567890L);			//숫자로 생성
+```
 
+#### 다른 타입으로의 변환
+```java
+String toString()		//문자열로 변환
+String toString(int radix)	//지정된 진법(radix)의 문자열로 변환
+byte[] toByteArray()		//byte배열로 변환
 
-개인 공부하시는 분들 과정 시작하고 개인 공부 얼마나 하시나요?
+int intValue()
+long longValue()
+float floatValue()
+double doubleValue()
+
+byte byteValueExact()
+int intValueExact()
+long longValueExact()
+```
+> Exact가 붙은 것들은 변환한 결과가 변환한 타입의 범위에 속하지 않으면 ArithmeticException을 발생시킨다.
+
+#### BigInteger의 연산
+```java
+BigInteger add(BigInteger val)		//덧셈 this+val
+BigInteger subtract(BigInteger val)	//뺄셈 this-val
+BigInteger multiply(BigInteger val)	//곱셈 this*val
+BigInteger divide(BigInteger val)	//나눗셈 this/val
+BigInteger remainder(BigInteger val)	//나머지 this%val
+```
+> BigInteger는 불변이므로, 반환타입이 BigInteger란 얘기는 새로운 인스턴스가 반환된다는 뜻이다.
+
+#### 비트 연산 메서드
+> 큰 숫자를 다루기 위한 클래스이므로, 성능을 향상싴키기 위해 비트단위로 연산을 수행하는 메서드들을 가지고 있다.
+
+```java
+int bitCount()			//2진수로 표현했을 때, 1의 개수(음수는 0의 개수)를 반환
+int bitLenghth()		//2진수로 표현했을 때, 값을 표현하는데 필요한 bit의 수
+boolean testBit(int n)		//우측에서 n+1번째 비트가 1이면 true
+BigInteger setBit(int n)	//우측에서 n+!번째 비트를 1로 변경
+BigInteger clearBit(int n)	//우측에서 n+!번째 비트를 0으로 변경
+BigInteger flipBit(int n)	//우측에서 n+!번째 비트를 전환(0 <-> 1)
+```
+```java
+BigInteger bi = new BigInteger("4");
+if(bi.remainder(new BigInteger("2")).equals(BigInteger.ZERO)) {...}
+
+BigInteger bi = new BigInteger("4");
+if(!bi.testBit(0)) { ... }		//비트연산으로 처리하는 것이 더 간단하다.
+```
+> 정수가 짝수인지 확인하는 조건식이다.   
+> 
