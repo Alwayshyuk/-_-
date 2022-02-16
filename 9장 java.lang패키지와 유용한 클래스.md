@@ -1386,7 +1386,7 @@ System.out.println(bd1.divide(bd2, 2, HALF_UP));			//123.46
 System.out.println(bd1.divide(bd2, new MathContext(2, HALF_UP)));	//1.2E+2
 ```
 
-####scale의 변경
+#### scale의 변경
 > BigDecimal을 10으로 곱하거나 나누는 대신 scale의 값을 변경함으로써 같은 결과를 얻을 수 있다.
 
 ```java
