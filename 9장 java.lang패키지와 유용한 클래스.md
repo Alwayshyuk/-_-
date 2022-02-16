@@ -1285,4 +1285,115 @@ BigInteger bi = new BigInteger("4");
 if(!bi.testBit(0)) { ... }		//비트연산으로 처리하는 것이 더 간단하다.
 ```
 > 정수가 짝수인지 확인하는 조건식이다.   
-> 
+
+## java.math.BigDecimal클래스
+>BigDecimal은 실수형과 달리 정수를 이용해서 실수를 표현한다.     
+>오차가 매우 적고 정밀하다.
+>실수를 정수와 10의 제곱으로 표현한다.
+
+```java
+private final BigInteger intVal;	//정수unscaled value
+private final int scale;		//지수scale
+private transient int precision		//정밀도precision - 정수의 자릿수
+
+BigDecimal val = new BigDecimal("123.45");	//12345 * 10의 -2승
+System.out.println(val.unscaledValue());	//12345
+System.out.println(val.scale());		//2
+System.out.println(val.precision());		//5
+```
+
+#### BigDecimal의 생성
+> 기본형 리터럴로 표현할 수 있는 값의 한계가 있어 문자열로 숫자를 표현하는 것이 일반적이다.
+
+```java
+BigDecimal val;
+val = new BigDecimal("123.4567890");	//문자열로 생성
+val = new BigDecimal(123.456);		//double타입의 리터럴로 생성
+val = new BigDecimal(123456);		//int, long타입의 리터럴로 생성
+val = BigDecimal.valueOf(123.456);	//생성자 대신 valueOf(double) 사용
+val = BigDecimal.valueOf(123456)	//생성자 대신 valueOf(int) 사용.
+
+System.out.println(new BigDecimal(0.1));	//0.1000000000000555111...
+```
+> double타입의 값을 매개변수로 갖는 생성자를 사용하면 오차가 발생할 수 있다.
+
+#### 다른 타입으로의 변환
+```java
+String toPlainString()		//어떤 경우에도 다른 기호없이 숫자로만 표현.	
+String toString()		//필요하면 지수형태로 표현할 수도 있음.
+
+BigDecimal val = new BigDecimal(1.0e - 22);
+System.out.println(val.toPlainString());	//0.00000000000000000000010...
+System.out.println(val.toString());		//1.000000000000000048...5E-22
+```
+> 대부분의 경우 이 두 메서드의 반환결과가 같지만,   
+> BigDecimal을 생성할 때, 지수형태의 리터럴을 사용했을 때 다른 결과를 얻는 경우가 있다.
+
+```java
+int intValue()
+long longValue()
+float floatValue()
+double soubleValue()
+
+byte byteValueExact()
+short shortValueExact()
+int intValueExact()
+long longValueExact()
+BigInteger toBigIntegerExact()
+```
+> BigDemical도 Number로 부터 상속받은 기본형으로 변환하는 메서드들을 가지고 있다.      
+> Exact가 붙은 것들은 변환 결과가 변환한 타입의 범위에 속하지 않으면 ArithmeticException을 발생시킨다.
+
+#### BigDecimal의 연산
+```java
+BigDecimal add(BigDecimal val)		//덧셈 this + val
+BigDecimal subtract(BigDecimal val)	//뺄셈 this - val
+BigDecimal multiply(BigDecimal val)	//곱셈 this * val
+BigDecimal devide(BigDecimal val)	//나눗셈 this / val
+BigDecimal remainder(BigDecimal val)	//나머지 this % val
+```
+> BigInteger와 마찬가지로 BigDecimal은 불변이므로,    
+> 반환타입이 BigDemical인 경우 새로운 인스턴스가 반환된다.    
+> 곱셈에서는 두 피연산자의 scale을 더하고, 나눗셈에서는 뺀다.     
+> 덧셈과 뺄셈에서는 둘 중에서 자리수가 높은 쪽으로 맞추기 위해 두 scale중에서 큰 쪽이 결과가 된다.
+
+#### 반올림 모드 - devide()와 setScale()
+> 나눗셈의 결과를 어떻게 반올림roundingMode처리할 것인가와, 몇 번째 자리scale에서 반올림할 것인지 지정할 수 있다.
+> BigDemical이 아무리 오차없이 실수를 저장한다해도 나눗셈에서 발생하는 오차는 어쩔 수 없다.
+
+```java
+BigDecimal divide(BigDecimal divisor)
+BigDecimal divide(BigDecimal divisor, int roundingMode)
+BigDecimal divide(BigDecimal divisor, RoundingMode roundingMode)
+BigDecimal divide(BigDecimal divisor, int scale, int roundingMode)
+BigDecimal divide(BigDecimal divisor, int scale, RoundingMode roundingMode)
+BigDecimal divide(BigDecimal divisor, MathContext mc)
+```
+> roundingMode는 반올림 처리방법에 대한 것으로 BigDecimal에 정의된 'ROUND_'로 시작하는 상수들 중에 하나를 선택해서 사용하며 된다.   
+> RoundingMode는 이 상수들을 열거형으로 정의한 것이다.    
+> 1/3처럼 나눗셈한 결과가 무한소수인 경우, 반올림 모드를 지정해주지 않으면 ArithmeticException이 발생한다.
+
+#### java.math.MathContext
+> 반올림 모드와 정밀도precision을 하나로 묶어 높은 것이다.
+> divide()에서는 scale이 소수점 이하의 자리수를 의미하는데,   
+> MathContext에서는 precision이 정수와 소수점 이하를 모두 포함한 자리수를 의미한다.
+
+```java
+BigDecimal bd1 = new BigDecimal("123.456");
+BigDecimal bd2 = new BigDecimal("1.0");
+
+System.out.println(bd1.divide(bd2, 2, HALF_UP));			//123.46
+System.out.println(bd1.divide(bd2, new MathContext(2, HALF_UP)));	//1.2E+2
+```
+
+####scale의 변경
+> BigDecimal을 10으로 곱하거나 나누는 대신 scale의 값을 변경함으로써 같은 결과를 얻을 수 있다.
+
+```java
+BigDecimal setScale (int newScale)
+BigDecimal setScale (int newScale, int roundingMode)
+BigDecimal setScale (int newScale, RoundingMode mode)
+```
+> scale의 값을 줄이는 것은 10의 n제곱으로 나누는 것과 같으므로,   
+> divide()를 호출할 때처럼 오차가 발생할 수 있고 반올림 모드를 지정해 주어야 한다.
+
