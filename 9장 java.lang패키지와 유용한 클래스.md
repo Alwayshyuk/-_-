@@ -59,7 +59,7 @@ public void wait(long timeout, int nanos)
 public boolean equals(Object obj) {
   return (this == obj);
 ```
-> 매개변수로 객체의 참조변수를 받아서 비교하여 그 결과를 boolean값으로 알려준다.   
+> 매개변수로 객체의 참조변수를 받아서하여 그 결과를 boolean값으로 알려준다.   
 > 두 객체의 같고 다름을 참조변수의 값(주소)으로 판단한다.   
 > 그렇기 때문에 서로 다른 두 객체를 equals메서드로 비교하면 항상 false를 결과로 얻게 된다.   
 
@@ -610,9 +610,9 @@ System.out.println(sb == sb2);		//false
 System.out.println(sb.equals(sb2));	//false
 
 String s = sb.toString();
-String s = sb2.toString();
+String s1 = sb2.toString();
 
-System.out.println(sb.equals(sb2));	//true
+System.out.println(s.equals(s1));	//true
 ```
 > String클래스에서는 equals메서드를 오버라이딩해서 문자열의 내용을 비교하도록 구현되어 있지만,    
 > StringBuffer클래스는 equals메서드를 오버라이딩하지 않아서 StringBuffer클래스의 equals메서드를 사용해도   
