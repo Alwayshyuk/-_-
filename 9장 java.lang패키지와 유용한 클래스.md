@@ -688,7 +688,7 @@ char c = sb.charAt(2);				// c = 'c'
 ```java
 StringBuffer delete(int start, int end)
 
-StringBuffer sb = new StringBuffer("0123456");		//sb = "0126"
+StringBuffer sb = new StringBuffer("0123456");		//sb = "0123456"
 StringBuffer sb2 = sb.delete(3, 6);			//sb2 = "0126"
 ```
 > 시작위치start부터 끝 위치end 사이에 있는 문자를 제거한다. 단, 끝 위치는 제외.
