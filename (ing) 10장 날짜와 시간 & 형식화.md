@@ -116,3 +116,38 @@ SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 
 String result = df.format(today);
 ```
+## ChoiceFormat
+ ChoiceFormat은 특정 범위에 속하는 값을 문자열로 변환해준다.     
+```java
+double[] limits = {60, 70, 80, 90};
+//String pattern = "60#D|70#c|80#B|90#A";	//limit#value의 형태로 사용된다.
+//String pattern = "59<D|69<C|79<B|89<A";	//#은 경계값을 범위에 포함시키지만, <는 포함시키지 않는다.
+String[] grades = {"D", "C", "B", "A"};
+
+int[] scores = {100, 95, 88, 70, 52, 60, 70};
+
+ChoiceFormat form = new ChoiceFormat(limits, grades};
+//ChooiceFormat form = new ChoiceFormat(pattern);	//패턴을 이용
+for(int i =0; i<scores.length; i++) {
+	System.out.println(scores[i] + ":" +form.format(scores[i]));
+```
+> 두 개의 배열이 사용되었는데 하나limits는 범위의 경계값을 저장하는데 사용되었고,   
+> 또 하나grades는 범위에 포함된 값을 치환할 문자열을 저장하는데 사용되었다.     
+> 경계값은 double형으로 반드시 모두 오름차순으로 정렬되어 있어야 하며,   
+> 치환될 문자열의 개수는 경계값에 의해 정의된 범위의 개수와 일치해야한다. 그렇지않으면 IllegalArgumentException이 발생한다.
+
+## MessageFormat
+ MessageFormat은 데이터를 정해진 양식에 맞게 출력할 수 있도록 도와준다.   
+ 데이터가 들어갈 자리를 마련해 놓은 양식을 미리 작성하고    
+ 프로그램을 이용해서 다수의 데이터를 같은 양식으로 출력할 때 사용하면 좋다.
+ ```java
+ String msg = "Name: {0} \nTel: {1} \nAge: {2} \nBirthday: {3}";
+ 
+ Object[] arguments = {"이자바", "02-123-1234", "27", "07-09"};
+ 
+ String result = MessageFormat.format(msg, arguments);		//{index}에 맞는 위치로 들어간다.
+ //홀따옴표'가 escape문자로 사용되기 때문에 문자열 msg에서 홀따옴표를 사용하기 위해서는 두 번 연속으로 사용해야한다.
+ ```
+ 
+ #java.time패키지
+ 
