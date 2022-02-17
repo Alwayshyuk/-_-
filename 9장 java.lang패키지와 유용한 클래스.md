@@ -728,7 +728,7 @@ int length = sb.length();					//length = 7
 ```java
 StringBuffer replace(int start, int end, String str)
 
-StringBuffer sb = new StringBuffer("0123456"
+StringBuffer sb = new StringBuffer("0123456");
 sb.replace(3, 6, "AB");						//sb = "012AB6"
 ```
 > 지정된 범위 start~end의 문자들을 주어진 문자열로 바꾼다.    
