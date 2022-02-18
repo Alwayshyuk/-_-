@@ -150,4 +150,52 @@ for(int i =0; i<scores.length; i++) {
  ```
  
  #java.time패키지
+ java.time - 날짜와 시간을 다루는데 필요한 핵심 클래스들을 제공.
+ java.time.chrono - 표준ISO이 아닌 달력 시스템을 위한 클래스들을 제공.
+ java.time.format - 날짜와 시간을 파싱하고, 형식화하기 위한 클래스들을 제공.
+ java.time.temporal - 날짜와 시간의 필드field와 단위unit를 위한 클래스들을 제공.
+ java.time.zone - 시간대time-zone와 관련된 클래스들을 제공.
+ > 위 클래스들은 String클래스와 같이 불변이다.   
+ > 멀티 쓰레드 환경에서는 동시에 여러 쓰레드가 같은 객체에 접근할 수 있기 때문에,   
+ > 변경 가능한 객체는 데이터가 잘못될 가능성이 있으며, 이를 쓰레드에 안전하지 않다고 한다.
+
+## java.time 패키지의 핵심 클래스
+날짜와 시간을 하나로 표현하는 Calendar클래스와 달리,    
+java.time패키지에서는 날짜와 시간을 별도의 클래스로 분리해 놓았다.    
+> 시간은 LocalTime클래스, 날짜는 LocalDate클래스를, 모두 필요할 때는 LocalDateTime클래스를 이용한다.     
+> 여기에 시간대까지 다뤄야 한다면 ZonedDateTime클래스를 사용한다.
+
+#### Priod와 Duration
+> period는 두 날짜간의 차이를 표현하고, Duration은 시간의 차이를 표현한다.
+
+#### 객체 생성하기 - now(), of()
+```java
+LocalDate date = LocalDate.now();	//2022-02-18
+LocalTime time = LocalTime.now();	//21:54:01.875
+LocalDateTime dateTime = LocalDateTime.now();	//2022-02-18T21:54:01.875
+ZonedDateTime dateTimeInKr = ZonedDateTime.now();	//2022-02-18T21:54:01.875+09:00[Asia/Seoul]
+
+LocalDate date = LocalDate.of(2022, 02, 18);	//2022년 11월 23일
+LocalTime time = LocalTime.of(23, 59, 59);	//23시 59분 59초
+
+LocalDateTime dateTime = LocalDateTime.of(date, time);
+ZonedDateTime zDateTime = ZonedDateTime.of(dateTime, ZonedId.of("Asia/Seoul");
+```
+
+#### Temporal과 TemporalAmount
+날짜와 시간을 표현하기 위한 클래스들은 모두 Temporal, TemporalAccessor, TemporalAdjuster 인터페이스를 구현했고,     
+Duration과 Period는 TemporalAmount인터페이스를 구현했다.
+
+#### TemporalUnit과 TemporalField
+ 날짜와 시간의 단위를 정의해 놓은 것이 TemporalUnit인터페이스이고, 이 인터페이스를 구현한 것이 열거형 ChronoUnit이다.    
+ TemporalField는 년, 월, 일 등 날짜와 시간의 필드를 정의해 놓은 것으로 열거형 ChronoField가 이 인터페이스를 구현했다.
+ ```java
+ LocalTime now = LocalTime.now();	//현재시간
+ int minute = now.getMinute(); =now.get(ChronoField.MINUTE_OF_HOUR); //분만 뽑아낸다. 두 문장 동일.
+ 
+ LocalDate now = LocalDate.now();
+ LcalDate tomorrow = today.plusDays(1); = today.plus(1, ChronoUnit.DAYS);	//오늘에 1일을 더한다.
+ ```
+ 
+ ## LocalDate와 LocalTime
  
