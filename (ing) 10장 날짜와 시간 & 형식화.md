@@ -198,4 +198,26 @@ Duration과 Period는 TemporalAmount인터페이스를 구현했다.
  ```
  
  ## LocalDate와 LocalTime
+ 객체를 생성하는 방법은 현재의 날짜와 시간을 LocalDate와 LocalTime으로 각각 반환하는 now()와   
+ 지정된 날짜와 시간으로 LocalDate와 LocalTime객체를 생성하는 of()가 있다.   
+ 둘 다 static메서드이다.
+ ```java
+ LocalDate birthday = LocalDate.of(1993, 09, 20);	//1993년 9월 20일
+ LocalTime birthTime = LocalTime.of(04, 30, 00);	//4시 30분 00초
  
+ static LocalDate of(int year, Month month, int dayOfMoneth)
+ static LocalDate of(int year, int month, int dayOfMoneth)
+ 
+ static LocalTime of(int hour, int min, int sec, int nanoOfSecond)
+ static LocalTime of(int hour, int min, int sec)
+ static LocalTime of(int hour, int min)
+ 
+ LocalDate birthDate = LocalDate.ofYearDay(1999, 365);	//1999년의 365번째 날, 1999년 12월 31일
+ LocalTime birthTime = LocalTime.ofSecondDay(86399);	//23시 59분 59초
+ 
+ LocalDate birthDate = LocalDate.parse("1999-12-31");	//1999년 12월 31일
+ LocalTime birthTime = LocalTime.parse("23:59:59");	//23시 59분 59초
+```
+> parse()를 이용하면 문자열을 날짜와 시간으로 변환할 수 있다.
+
+#### 특정 필드의 값 가져오기 - get(), getXXX()
