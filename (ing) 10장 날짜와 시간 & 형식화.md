@@ -221,3 +221,27 @@ Duration과 Period는 TemporalAmount인터페이스를 구현했다.
 > parse()를 이용하면 문자열을 날짜와 시간으로 변환할 수 있다.
 
 #### 특정 필드의 값 가져오기 - get(), getXXX()
+```java
+
+LocalDate date = LocalDate.now();
+date.getYear()				//년도2022
+date.getMonthValue()			//월 2
+date.getMonth()				//월FEBRUARY	getMonth().getValue() = 12
+date.getDayOfMonth()			//일19
+date.getDayOfYear()			//같은 해의 1월 1일부터 몇 번째 일 50
+date.getDayOfWeek()			//요일 SATURDAY  getDayOfWeek().getValue()=6
+date.lengthOfMonth()			//같은 달의 총 일수 28
+date.lengthOfYear()			//같은 해의 총 일수365
+date.isLeapYear()			//윤년여부 확인 false
+
+LocalTime time = LocalTime.now();
+time.getHour()				//시 0
+time.getMinute()			//분 3
+time.getSecond()			//초 59
+time.getNano()				//나노초 0
+```
+> Calendar와 달리 월의 범위가 1~12이고, 요일은 월요일이 1 일요일이 7 이다.
+
+#### 필드의 값 변경하기 - with(), plus(), minus()
+ 날짜와 시간에서 특정 필드 값을 변경하려면, 다음과 같이 with로 시작하는 메서드를 사용하면 된다.
+ ```java
