@@ -134,7 +134,8 @@ for(int i =0; i<scores.length; i++) {
 > 두 개의 배열이 사용되었는데 하나limits는 범위의 경계값을 저장하는데 사용되었고,   
 > 또 하나grades는 범위에 포함된 값을 치환할 문자열을 저장하는데 사용되었다.     
 > 경계값은 double형으로 반드시 모두 오름차순으로 정렬되어 있어야 하며,   
-> 치환될 문자열의 개수는 경계값에 의해 정의된 범위의 개수와 일치해야한다. 그렇지않으면 IllegalArgumentException이 발생한다.
+> 치환될 문자열의 개수는 경계값에 의해 정의된 범위의 개수와 일치해야한다.     
+> 그렇지않으면 IllegalArgumentException이 발생한다.
 
 ## MessageFormat
  MessageFormat은 데이터를 정해진 양식에 맞게 출력할 수 있도록 도와준다.   
@@ -149,15 +150,15 @@ for(int i =0; i<scores.length; i++) {
  //홀따옴표'가 escape문자로 사용되기 때문에 문자열 msg에서 홀따옴표를 사용하기 위해서는 두 번 연속으로 사용해야한다.
  ```
  
- #java.time패키지
- java.time - 날짜와 시간을 다루는데 필요한 핵심 클래스들을 제공.
- java.time.chrono - 표준ISO이 아닌 달력 시스템을 위한 클래스들을 제공.
- java.time.format - 날짜와 시간을 파싱하고, 형식화하기 위한 클래스들을 제공.
- java.time.temporal - 날짜와 시간의 필드field와 단위unit를 위한 클래스들을 제공.
- java.time.zone - 시간대time-zone와 관련된 클래스들을 제공.
- > 위 클래스들은 String클래스와 같이 불변이다.   
- > 멀티 쓰레드 환경에서는 동시에 여러 쓰레드가 같은 객체에 접근할 수 있기 때문에,   
- > 변경 가능한 객체는 데이터가 잘못될 가능성이 있으며, 이를 쓰레드에 안전하지 않다고 한다.
+ # java.time패키지
+ java.time - 날짜와 시간을 다루는데 필요한 핵심 클래스들을 제공.     
+ java.time.chrono - 표준ISO이 아닌 달력 시스템을 위한 클래스들을 제공.      
+ java.time.format - 날짜와 시간을 파싱하고, 형식화하기 위한 클래스들을 제공.      
+ java.time.temporal - 날짜와 시간의 필드field와 단위unit를 위한 클래스들을 제공.      
+ java.time.zone - 시간대time-zone와 관련된 클래스들을 제공.      
+ > 위 클래스들은 String클래스와 같이 불변이다.     
+ > 멀티 쓰레드 환경에서는 동시에 여러 쓰레드가 같은 객체에 접근할 수 있기 때문에,       
+ > 변경 가능한 객체는 데이터가 잘못될 가능성이 있으며, 이를 쓰레드에 안전하지 않다고 한다.   
 
 ## java.time 패키지의 핵심 클래스
 날짜와 시간을 하나로 표현하는 Calendar클래스와 달리,    
@@ -375,3 +376,159 @@ ZonedDateTime nyTime = ZonedDateTime.now().withZoneSameInstant(nyId);		//2022-02
 OffsetDateTime odt = zdt.toOffsetDateTime();					//2020-02-21T12:34:56+09:00
 ```
 ## TemporalAdjusters
+> 지난 주 토요일이 며칠읹, 이번 달의 3번째 금요일은 며칠인지와 같은    
+> 자주 쓰일만한 날짜 계산들을 대신 해주는 메서드를 정의해놓은 것이 TemporalAdjusters클래스다.
+```java
+LocalDate today = LocalDate.now();
+LocalDate nextMonday = today.with(TemporalAdjusters.next(DayOfWeek.MONDAY));
+```
+> 다음 주 월요일의 날짜를 계싼하는 메서드다.
+
+```java
+firstDayOfNextYear()	//다음 해의 첫 날
+firstDayOfNextMonth()	//다음 달의 첫 날
+firstDayOfYear()	//올 해의 첫 날
+firstDayOfMonth()	//이번 달의 첫 날
+lastDayOfYear()		//올 해의 마지막 날
+lastDayOfMonth()	//이번 달의 마지막 날
+firstInMonth(DayOfWeek dayOfWeek)	//이번 달의 첫 번째 ?요일
+lastInMonth(DayOfWeek dayOfWeek)	//이번 달의 마지막 ?요일
+previous(DayOfWeek dayOfWeek)		//지난 ?요일(당일 미포함)
+previousOfSame(DayOfWeek dayOfWeek)	//지난 ?요일(당일 포함)
+next(DayOfWeek dayOfWeek)		//다음 ?요일(당일 미포함)
+nextOrSame(DayOfWeek dayOfWeek)		//다음 ?요일(당일 포함)
+dayOfWeekInMonth(int ordinal, DayOfWeek dayOfWeek)	//이번 달의 n번째 ?요일
+```
+
+#### TemporalAdjuster 직접 구현하기
+> LocalDate의 with()는 다음과 같이 정의되어있으며,    
+> TemporalAdjuster인터페이스를 구현한 클래스의 객체를 매개변수로 제공해야한다.
+```java
+LocalDate with(TemporalAdjuster adjuster)
+
+@FunctionalInterface
+public interface TemporalAdjuster {
+	Temporal adjustInto(Temporal temporal)	}
+```
+> TemporalAdjuster인터페이스는 다음과 같이 추상 메서드 하나만 정의되어 있으며, 이 메서드만 구현하면 된다.      
+> 실제로 구현해야하는 것은 adjustInto()지만, 우리가 TemporalAdjuster와 같이 사용해야 하는 메서드는 with() 이다.     
+> with()와 adjustInto() 중에서 어느 쪽을 사용해도 되지만,    
+> adjustInto()는 내부적으로만 사용할 의도로 작성된 것이기 때문에, with()를 사용하도록 한다.
+
+## Period 와 Duration
+> Period는 날짜와 날짜의 차이를, Duration은 시간과 시간의 차이를 계산하기 위한 것이다.
+
+#### between()
+```java
+LocalDate date1 = LocalDate.of(2014, 1, 1);
+LocalDate date2 = LocalDate.of(2015,12,31);
+
+Period pe = Period.between(date1, dadte2);	//date1이 date2보다 이전이면 양수, 이후면 음수로 Period에 저장된다.
+
+LocalTime time1 = LocalTime.of(0,0,0);
+LocalTime time2 = LocalTime.of(12,34,56);
+
+Duration du = Duration.between(time1, time2);
+```
+Period, Duration에서 특정 필드 값을 얻을 때는 get()을 사용한다.   
+그런데 Period와 달리 Duration에는 getHours(), getMinutes() 같은 메서드가 없다.     
+그래서 Duration을 LocalTime으로 변환한 다음에, LocalTime이 가지고 있는 get메서드를 사용한다.
+```java
+LocalTime tmpTime = LocalTime.of(0,0).plusSeconds(du.getSeconds());
+
+int hour = tmpTime.getHour();
+int min = tmpTime.getMinute();
+int sec = tmpTime.getSecond();
+int nano = tmpTime.getNano();
+```
+
+#### between()과 util()
+> 둘이 거의 같은 일을 하나 between은 static 메서드이고 util()은 인스턴스 메서드다.
+```java
+//Period pe = Period.between(today, myBirthday);
+Period pe = today.until(myBirthday);
+long dday = today.until(myBirthday, ChronoUnit.DAYS);
+```
+> Period는 년월일을 분리해서 저장하기 때문에, D-day를 구하려는 경우에는 두 개의 매개변수를 받는 until()을 사용하는 것이 낫다.
+
+#### of(), with()
+> Period에는 of(), ofYears(), ofMonths(), ofWeeks(), ofDays()가 있고,    
+> Duration에는 of(), ofDays(), ofHours(), ofMinutes(), ofSecond() 등이 있다.
+```java
+Period pe = Period.of(1,12,31);			//1년 12개월 31일
+Duration du = Duration.of(60, ChronoUnit.SECONDS);	//60초
+Duration du = Duration.ofSeconds(60);			//위 문장과 동일
+
+pe = pe.withYears(2);		//1년에서 2년으로 변경. withMonth(), withDays()
+du = du.withSeconds(120);	//60초에서 120초로 변경. withNanos()
+```
+
+#### 사칙연산, 비교연산, 기타 메서드
+```java
+pe = pe.minusYears(1).multipliedBy(2);		//1년을 빼고 2를 곱한다.
+du = du.plusHours(1).dividedBy(60);		//1시간을 더하고 60으로 나눈다.
+```
+> Period는 날짜의 기간을 표현하기 위한 것으로 나눗셈을 위한 메서드가 유용하지않아 없다.     
+
+```java
+boolean sameDate = Period.between(date1, date2).isZero();	//두 시간이 같은 지 확인한다. 차이가 0인지
+boolean isDefore = Duration.between(time1, time2).isNegative();	//어느쪽이 앞인지 확인한다. 차이가 음수인지
+
+pe = Period.of(1,13,32).normalized();		//1년 13개월 32일 -> 2년 1개월 32일
+```
+> Period의 normalized()메서드는 월의 값이 12를 넘지 않게 바꿔준다.
+
+#### 다른 단위로 변환 - toTotalMonths(), toDays(), toHours(), toMinutes()
+이름이 to로 시작하는 메서드들은 Period와 Duration을 다른 단위의 값으로 변환하는데 사용된다.   
+
+```java
+LocalDate date1 = LocalDate.of(2022, 2, 21);
+LocalDate date2 = LocalDate.of(2022, 2, 22);
+
+long period = date2.toEpochDay()-date1.toEpochDay();
+```
+> LocalDate에는 toEpochDay()라는 메서드를 가지고 있다.   
+> 이 메서드는 Epochy Day인 1970-01-01부터 날짜를 세어서 반환한다.
+
+## 파싱과 포맷
+ 형식화formatting와 고나련된 클래스들은 java.time.format패키지에 들어있는데,     
+ 이 중에서 DateTimeFOrmatter가 핵심이다.    
+ 이 클래스에는 자주 쓰이는 다양한 형식들을 기본적으로 정의하고 있고, 직접 정의해서 사용할 수도 있다.
+ ```java
+ LocalDate date = LocalDate.of(2022, 2, 21);
+ String yyyymmdd = DateTimeFormatter.ISO_LOCAL_DATE.format(date);	//2022-02-21
+ String yyyymmdd = date.format(DateTimeFormatter.ISO_LOCAL_DATE);	//2022-02-21
+ ```
+ 
+ #### 로케일에 종속된 형식화
+ DateTImeFormatter의 static 메서드 ofLocalizedDate(), ofLocalizedTime(), ofLocalized DateTime()은    
+ 로케일locale에 종속적인 포맷터를 생성한다.
+ ```java
+ DateTImeFormatter formatter = DateTimeFormatter.ofLOcalizedDate(FormatStyle.SHORT);
+ String shortFormat = formatter.format(LocalDAte.now());	//날짜: 22.02.21 시간:오후 9:15
+ ```
+ 
+ #### 출력형식 직접 정의하기.
+```java
+ZonedDateTime = zdateTime = ZonedDateTime.now();
+DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+
+zdateTime.format(formatter)		//2022.02.21
+```
+
+#### 문자열을 날짜와 시간으로 파싱하기.
+문자열을 날짜 또는 시간으로 변환하려면 static메서드 parse()를 사용하며 된다.
+```java
+LocalDate date = LocalDate.parse("2022-02-21", DateTImeFormatter.ISO_LOCAL_DATE);
+```
+자주 사용되는 기본적인 형식의 문자열은 ISO_LOCAL_DATE와 같은 형식화 상수를 사용하지않고 파싱이 가능하다.
+```java
+LocalDate newDate = LocalDate.parse("2022-02-21");
+LocalTime newTime = LocalTime.parse("23:59:59");
+LocalDateTime newDateTime = LocalDateTime.parse("2022-02-21T23:59:59");
+```
+다음과 같이 ofPattern()을 이용해서 파싱을 할 수도 있다.
+```java
+DateTimeFormatter pattern = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+LocalDateTime endOfYear = LocalDateTime.parse("2022-02-21 23:59:59", pattern);
+```
