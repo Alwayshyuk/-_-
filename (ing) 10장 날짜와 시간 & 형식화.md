@@ -245,3 +245,94 @@ time.getNano()				//나노초 0
 #### 필드의 값 변경하기 - with(), plus(), minus()
  날짜와 시간에서 특정 필드 값을 변경하려면, 다음과 같이 with로 시작하는 메서드를 사용하면 된다.
  ```java
+ LocalDate withYear(int year)
+ LocalDate withMonth(int month)
+ LocalDate withDayOfMonth(int dayOfMonth)
+ LocalDate withDayOfYear(int dayOfYear)
+ 
+ LocalTime withHour(int hour)
+ LocalTime withMinute(int minute)
+ LocalTime withSecond(int second)
+ LocalTime withNano(int nanoOfSecond)
+ 
+ date = date.withYear(2000)	//년도를 2000년으로 변경
+ //필드를 변경하는 메서드들은 항상 새로운 객체를 반환하므로
+ // 이와 같이 대입 연산자를 같이 사용해야한다.
+ 
+ LocalTime time = LocalTime.of(12, 34, 56);	//12시 34분 56초
+ time = time.truncatedTo(ChronoUnit.HOURS);	//시hour보다 작은 단위를 0으로     12시 00분 00초
+ ```
+ > LocalDate에는 truncatedTo()가 없는데 이는 년, 월, 일이 0이 될 수 없기 때문이다.
+ 
+ #### 날짜와 시간의 비교 - isAfter(), isBefore(), isEqual()
+ ```java
+  int result = date1.compareTo(date2);		//같으면 0, date1이 이전이면 -1, 이 후면 1
+  ```
+  > LocalTime과 LocalDate 모두 compareTo()가 오버라이딩되어있다.
+
+```java
+LocalDate date1 = LocalDate.of(1999, 12, 31);
+JapaneseDate date2 = JapaneseDate.of(1999, 12, 31);
+
+date1.equals(date2)	//false YEAR_OF_ERA 가 일본은 다름
+date1.isEquals(date2)	//true
+
+boolean isAfter(ChronoLocalDate other)
+boolean isBefore(ChronoLocalDate other)
+boolean isEqual(ChronoLocalDate other)		//LocalDate에만 있음.
+```
+
+#### Instant
+>Instant는 에포크 타임(EPOCH TIME, 1970-01-01 00:00:00 UTC)부터 경과한 시간을 나노초 단위로 표현한다.    
+
+```java
+Instant now = Instant.now();
+Instant now2 = Instant.ofEpochSecond(now.getEpochSecond());
+Instant now3 = Instant.ofEpochSecond(now.getEpochSecond(), now.getNano());
+```
+> Instant를 생성할 땐 위와 같이 now()와 ofEpochSecond()를 사용한다.
+```java
+long epochSec = now.getEpochSecond();
+int nano = now.getNano();
+```
+> 필드에 저장된 값을 가져올 때는 이와 같이 한다.     
+
+```java
+static Date from(Instant instant)		//Instant에서 Date로
+Instant toInstant()				//Date에서 Instant로
+```
+> Date와 Instant의 변환 방법이다.
+
+## LocalDateTime과 ZonedDateTime
+> LocalDate와 LocalTime을 합친것이 LocalDateTime이고, 이에 시간대time zone을 추가한 것이 ZonedDateTime 이다.
+
+```java
+LocalDate date = LocalDate.of(2022, 02, 21);
+LocalTime time = LocalTime.of(12,34,56);
+
+LocalDateTime dt = LocalDateTime.of(date, time);
+LocalDateTime dt2 = date.atTime(time);
+LocalDateTime dt3 = time.atDate(date);
+LocalDateTime dt4 = date.atTime(12, 34, 56);
+LocalDateTime dt5 = time.atDate(LocalDate.of(2022, 02, 21));
+LocalDateTime dt6 = date.atStartOfDay();	//dt6 = date.atTime(0,0,0);
+```
+> LocalDate와 LocalTime을 합쳐서 LocalDateTime을 만드는 방법이다.
+
+#### LocalDateTime의 변환
+```java
+LocalDateTime dt = LocalDateTime.of(2022, 02, 21, 12, 34, 56);
+LocalDate date = dt.toLocalDate();					//LocalDateTime- > LocalDate
+LocalTime time = dt.toLocalTime();					//LocalDateTime -> LocalTime
+```
+
+#### LocalDateTime으로 ZonedDateTime 만들기
+> LocalDateTime에 시간대time-zone을 추가하면, ZonedDateTime이 된다.   
+> LocalDateTime에 atZone()으로 시간대 정보를 추가하면, ZonedDateTime을 얻을 수 있다.
+```java
+ZoneId zid = ZoneId.of("Asia/Seoul");
+ZonedDateTime zdt = dateTIme.atZone(zid);		// 2022-02-21T12:34:56.451+09:00[Asia/Seoul]
+
+ZonedDateTime zdt = LocalDate.now().atStartOfDay(zid);	// 2022-02-21T00:00+09:00[Asia/Seoul]
+
+ZoneId = nyId = ZoneId.of("America/New_York");
