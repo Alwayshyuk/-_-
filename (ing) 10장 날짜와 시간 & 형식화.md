@@ -336,3 +336,42 @@ ZonedDateTime zdt = dateTIme.atZone(zid);		// 2022-02-21T12:34:56.451+09:00[Asia
 ZonedDateTime zdt = LocalDate.now().atStartOfDay(zid);	// 2022-02-21T00:00+09:00[Asia/Seoul]
 
 ZoneId = nyId = ZoneId.of("America/New_York");
+ZonedDateTIme nyTime = ZonedDateTime.now().withZoneSameInstant(nyId);
+```
+
+#### ZoneOffset
+> UTC에서 얼마나 떨어져 있는지를 ZoneOffset으로 표현한다.
+```java
+ZoneOffset krOffset = ZonedDateTime.now().getOffset();
+int krOffsetInsec = krOffset.gt(ChronoField.OFFSET_SECONDS);	//32400초
+```
+
+#### OffsetDateTime
+> ZonedDateTime은 ZoneId로 구역을 표시하는데, ZoneId가 아닌 ZoneOffset을 사용하는 것이 OffsetDateTime이다.     
+> ZoneId는 일광절약시간처럼 시간대와 관련된 규칙들을 포함하고 있는데, ZoneOffset은 시간대를 시간의 차이로만 구분한다.
+
+```java
+ZonedDateTime zdt = ZonedDateTime.of(date, time, zid);
+OffsetDateTime odt = OffsetDateTime.of(date, time, krOffset);
+
+OffsetDateTime odt = zdt.toOffsetDateTime();			//ZonedDateTime -> OffsetDateTime
+```
+
+#### ZonedDateTime의 변환
+```java
+LocalDate date = LocalDate.of(2020, 02, 21);
+LocalTime time = LocalTime.of(12, 34, 56);
+		
+LocalDateTime dt = LocalDateTime.of(date, time);				//2020-02-21T12:34:56
+		
+ZoneId zid = ZoneId.of("Asia/Seoul");						//"Asia/Seoul"
+ZonedDateTime zdt = dt.atZone(zid);						//2020-02-21T12:34:56+09:00[Asia/Seoul]
+//String strZid = zdt.getZone().getId();					//Asia/Seoul
+		
+ZonedDateTime seoulTime = ZonedDateTime.now();					//2022-02-21T21:14:13.592525800+09:00[Asia/Seoul]
+ZoneId nyId = ZoneId.of("America/New_York");
+ZonedDateTime nyTime = ZonedDateTime.now().withZoneSameInstant(nyId);		//2022-02-21T07:14:13.594521600-05:00[America/New_York]
+		
+OffsetDateTime odt = zdt.toOffsetDateTime();					//2020-02-21T12:34:56+09:00
+```
+## TemporalAdjusters
