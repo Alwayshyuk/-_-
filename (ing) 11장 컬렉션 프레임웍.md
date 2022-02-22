@@ -48,3 +48,19 @@ Object[] toArray()
 Object[] toArray(Object[] a)
 //지정된 배열에 Collection의 객체를 저장해서 반환한다.
 ```
+
+#### List인터페이스
+ List인터페이스는 중복을 허용하면서 저장순서가 유지되는 컬렉션을 구현하는데 사용된다.
+ ```java
+ void add(int index, Object element)
+ boolean addAll(imt index, Collection c)
+ // 지정된 위치index에 객체element 또는 컬렉션에 포함된 객체들을 추가한다.
+ Object get(int index)
+ // 지정된 위치index에 있는 객체를 반환한다.
+ int indexOf(Object o)
+ // 지정된 객체의 위치index를 반환한다.(List의 첫 번째 요소부터 순방향으로 찾는다.)
+ int lastIndexOf(Object o)
+ // 지정된 객체의 위치 index를 반환한다.(List의 마지막 요소부터 역방향으로 찾는다.)
+ ListIterator listIterator()
+ ListIterator listIterator(int index)
+ //List의 객체에 접근할 수 있는 ListIterator를 반환한다.
