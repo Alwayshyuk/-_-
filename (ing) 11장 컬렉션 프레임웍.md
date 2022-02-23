@@ -283,4 +283,223 @@ public class ArrayListEx2 {
 	}
 
 }
+```java
+package practice;
+
+import java.util.Vector;
+
+public class VectorEx1 {
+
+	public static void main(String[] args) {
+		Vector v = new Vector(5);	//용량capacity이 5인 Vector를 생성한다.
+		v.add("1");
+		v.add("2");
+		v.add("3");
+		print(v);		//[1, 2, 3]
+						//size: 3
+						//capacity: 5
+		
+		v.trimToSize();//빈 공간을 없앤다.	배열은 크기를 변경할 수 없기 때문에 새로운 배열을 생성해서 그 주소값을 v에 할당한다.
+		print(v);		//[1, 2, 3]		기존의 Vector인스턴스는 더 이상 사용할 수 없으며, 후에 가비지컬렉터에 의해 메모리에서 제거된다.
+						//size: 3
+						//capacity: 3
+		
+		v.ensureCapacity(6); 		//용량을 최소 6으로 늘린다. 이미 용량이 6을 넘는다면 아무 일도 일어나지 않는다.
+		print(v);		//[1, 2, 3]
+						//size: 3
+						//capacity: 6
+		
+		v.setSize(7);				//사이즈를 7로 만든다. capacity는 항상 기존의 크기보다 2배로 증가하므로 12다.
+		print(v);		//[1, 2, 3, null, null, null, null]
+						//size: 7
+						//capacity: 12
+		
+		v.clear();		//모두 삭제한다.
+		print(v);		//[]
+						//size: 0
+						//capacity: 12
+	}
+	
+	static void print(Vector v) {
+		System.out.println(v);
+		System.out.println("size: "+v.size());
+		System.out.println("capacity: " + v.capacity());
+	}
+
+}
+```
+> ArrayList나 Vector 같이 배열을 이용한 자료구조는 데이터를 읽어오고 저장하는 데는 효율이 좋지만,    
+> 용량을 변경해야할 때는 새로운 배열을 생성한 후 기존의 배열로부터 데이터를 복사해야하기 때문에 효율이 떨어진다.
+
+## LinkedList
+배열은 가장 기본적인 형태의 자료구조로 구조가 간단하며 사용하기 쉽고     
+데이터를 읽어오는데 걸리는 시간(접근시간)이 가장 빠르다는 장점을 갖고 있다.       
+하지만 크기를 변경할 수 없다는 단점과 비순차적인 데이터의 추가 또는 삭제에 시간이 많이 걸린다는 단점이 있다.
+> 이러한 배열의 단점을 보완하기 위해서 Linked list라는 자료구조가 고안되었다.    
+> 배열은 모든 데이터가 연속적으로 존재하지만       
+> 링크드 리스트는 불연속적으로 존재하는 데이터를 서로 연결한 형태로 구성되어있다.
+```java
+class Node{
+	Node next;		//다음 요소의 주소를 저장
+	Object obj;	}	//데이터를 저장
+```
+삭제하고자 하는 요소의 이전요소가 삭제하고자 하는 요소의 다음 요소를 참조하도록 변경하면 요소가 삭제된다.      
+새로운 데이터를 추가할 때는 새로운 요소를 생성한 다음 추가하고자 하는 위치의 이전요소의 참조를       
+새로운 요소에 대한 참조로 변경해주고, 새로운 요소가 그 다음 요소를 참조하도록 변경하면 되므로 처리 속도가 빠르다.
+>링크드 리스트는 이동방향이 단방향이기 때문에 다음 요소에 대한 접근은 쉽지만 이전요소에 대한 접근은 어렵다.      
+>이 점을 보완한 것이 더블 링크드 리스트doubly linked list 다.     
+더블 링크드 리스는 단순히 링크드 리스트에 참조변수를 하나 더 추가하여    
+다음 여소에 대한 참조뿐 아니라 이전 요소에 대한 참조가 가능하도록 했다.
+```java
+class Node {
+	Node next;		//다음 요소의 주소를 저장
+	Node previos;		//이전 요소의 주소를 저장
+	Object obj;	}	//데이터를 저장
+```
+
+>더블 링크드 리스트의 접근성을 보다 향상시킨 것이 더블 써큘러 링크드 리스트doubly circular linked list 이다.     
+>단순히 더블 링크드 리스트의 첫 번째 요소와 마지막 요소를 서로 연결시킨 것이다.
+
+LinkedList클래스는 링크드 리스트의 단점인 낮은 접근성을 높이기 위해 더블 링크드 리스트로 구현되어있다.
+```java
+LinkedList()				//LinkedList 객체 생성
+LinkedList(Collection c)		//주어진 컬렉션을 포함하는 LinkedList객체 생성
+boolean add(Object o)			//지정된 객체o를 LinkedList의 끝에 추가
+void add(int index, Object element)	//지정된 위치index에 객체element 추가
+boolean addAll(collection c)		//주어진 컬렉션에 포함된 모든 요소를 LinkedList의 끝에 추가
+boolean addAll(int index, Collection c)	//지정된 위치index에 주어진 컬렉션에 포함된 모든 요소를 추가
+void clear()				//LinkedList의 모든 요소를 삭제
+boolean contains(Object o)		//지정된 객체가 LinkedList에 포함되었는지 알려줌
+boolean containsAll(Collection c)	//지정된 컬렉션의 모든 요소가 포함되었는지 알려줌
+Object get(int index)			//지정된 위치index의 객체를 반환
+int indexOf(Object o)			//지정된 객체가 저장된 위치를 반환
+boolean isEmpty()			//LinkedList가 비었는지 알려준다.
+Iterator iterator()			//Iterator를 반환한다.
+int lastIndexOf(Object o)		//지정된 객체의 위치index를 반환(역순 검색)
+ListIterator listIterator()		//ListIterator를 반환
+ListIterator listIterator(int index)	//지정된 위치부터 시작하는 ListIterator 반환
+Object remove(int index)		//지정된 위치index의 객체를 LinkedList에서 제거
+boolean removeAll(Collection c)		//지정된 컬렉션의 요소와 일치하는 요소를 모두 삭제
+boolean retainAll(Collection c)		//지정된 컬렉션의 모든 요소가 포함되어 있는지 확인
+Object set(int index, Object element)	//지정된 위치index의 객체를 주어진 객체로 변경
+int size()				//LinkedList에 저장된 객체의 수를 반환
+List subList(int fromIndex, int toIndex)//LinkedList의 일부를 List로 반환
+Object[] toArray()			//LinkedList에 저장된 객체를 배열로 반환
+Object[] toArray(Object[] a)		//LinkedList에 저장된 객체를 주어진 배열에 저장하여 반환
+Object element()			//LinkedList의 첫 번째 요소를 반환
+boolean off(Object o)			//지정된 객체o를 LinkedList의 끝에 추가
+Object peek()				//LinkedList의 첫 번째 요소를 반환
+Object poll()				//LinkedList의 첫 번째 요소를 반환, LinkedList에서는 제거된다
+Object remove()				//LinkedList의 첫 번째 요소를 제거
+void addFirst(Object o)			//LinkedList의 맨 앞에 객체o를 추가
+void addLast(Object o)			//LinkedList의 맨 끝에 객체o를 추가
+Iterator descendingIterator()		//역순으로 조회하기 위한 DescendingIterator를 반환
+Object getFirst()			//LinkedList의 첫 번째 요소를 반환
+Object getLast()			//LinkedList의 마지막 요소를 반환
+Object pop()				//removeFirst()와 동일
+void push(Object o)			//addFirst()와 동일
+Object removeFirst()			//LinkedList의 첫번째 요소 제거
+Object removeLast()			//LinkedList의 마지막 요소를 제거
+boolean removeFirstOccurrence(Object o)	//LinkedList에서 첫번째로 일치하는 객체를 제거
+boolean removeLastOccurrence(Object o)	//LinkedList에서 마지막으로 일치하는 객체를 제거
+```
+#### ArrayList와 LinkedList 성능비교
+```java
+
+		ArrayList al = new ArrayList(20000000);
+		LinkedList ll = new LinkedList();
+		
+		System.out.println("순차적 추가");
+		System.out.println(add1(al));		//188
+		System.out.println(add1(ll));		//223
+		
+		System.out.println("중간에 추가");
+		System.out.println(add2(al)); 		//2823
+		System.out.println(add2(ll)); 		//15
+		
+		System.out.println("중간에서 삭제");
+		System.out.println(remove2(al));	//2185
+		System.out.println(remove2(ll));	//141
+		
+		System.out.println("순차적 삭제");	
+		System.out.println(remove1(al));	//11
+		System.out.println(remove1(ll));	//38
+
+	}
+}
+```
+>순차적으로 추가/삭제하는 경우에는 ArrayList가 LinkedList보다 빠르다.
+만일 ArrayList의 크기가 충분하지 않으면, LinkedList가 더 빠를 수도 있다.    
+순차적으로 삭제한다는 것은 마지막부터 삭제한다는 것을 의미하므로    
+ArrayList는 마지막 데이터부터 삭제할 경우 각 요소들의 재배치가 필요없어 상당히 빠르다. null로만 바꾸면 된다.
+
+>중간 데이터를 추가/삭제하는 경우에는 LinkedList가 ArrayList보다 빠르다.
+이 경우 LinkedList는 각 요소간의 연결만 변경해주면 되므로 처리속도가 빠르다.     
+반면 ArrayList는 각 요소들을 재배치하여야하므로 느리다.   
+```java
+ArrayList al = new ArrayList(1000000);
+		LinkedList ll = new LinkedList();
+
+		add(al);
+		add(ll);
+		
+		System.out.println("접근시간테스트");
+		System.out.println(access(al));		//1
+		System.out.println(access(ll));		//140
+```
+배열의 경우 만일 인덱스가 n인 요소의 값을 얻어 오고자 한다면 단순히 아래와 같은 수식을 계산하면 된다.
+> 인덱스가 n인 데이터의 주소 = 배열의 주소 + n X 데이터 타입의 크기    
+LinkedList는 불연속적으로 위치한 각 요소들이 서로 연결된 것이라 처음부터 n번째 데이터까지    
+차례대로 따라가야만 원하는 값을 얻을 수 있다.   
+그래서 LinkedList는 저장해야하는 데이터의 개수가 많아질수록 데이터를 읽어오는 시간 즉, 접근시간이 길어진다.
+>ArrayList 읽기(접근시간): 빠르다   추가/삭제: 느리다.      순차적인 추가삭제는 더 빠르나 비효율적인  메모리 사용               
+>LinkedList 읽기(접근시간): 느리다  추가/삭제: 빠르다.      데이터가 많을수록 접근성이 떨어짐
+
+다루고자 하는 데이터의 개수가 변하지 않는 경우라면, ArrayList가 최상의 선택이나    
+데이터 개수의 변경이 잦다면 LinkedList를 사용하는 것이 더 나은 선택이다.    
+처음 작업하기 전에 데이터를 저장할 때는 ArrayList를 사용한 다음,     
+작업할 때는 LinkedList로 데이터를 옮겨서 작업하면 좋은 효율을 얻을 수 있을 것이다.
+
+## Stack과 Queue
+>스택은 마지막에 저장한 데이터를 가장 먼저 꺼내는 LIFO구조로 되어있다. 넣은 순서와 꺼낸 순서가 뒤집어진다.      
+>큐는 처음에 저장한 데이터를 가장 먼저 꺼내는 FIFO구조로 되어있다. 넣은 순서와 꺼낸 순서가 같다.     
+스택 순차적으로 데이터를 추가하고 삭제하는 ArrayList가 적절하고,     
+큐는 데이터를 꺼낼 때 항상 첫 번째 저장된 데이터를 삭제하므로 데이터의 추가/삭제가 용이한 LinkedList가 적합하다.
+
+```java
+boolean empty()			//Stack이 비어있는지 알려준다.
+Object peek()			//Stack의 맨 위에 저장된 객체를 반환. pop과 달리 꺼내지는 않는다.
+Object pop()			//Stack의 맨 위에 저장된 객체를 꺼낸다.
+Object push(Object item)	//Stack에 객체item를 저장한다.
+int search(Object o)		//Stack에서 주어진 객체o를 찾아서 그 위치를 반환, 없으면 -1, 배열과 달리 위치는 1부터 시작
+// Stack의 메서드
+boolean add(Object o)		//지정된 객체를 Queue에 추가
+Object remove()			//Queue에서 객체를 꺼내 반환
+Object element()		//삭제없이 요소를 읽어온다. peek과 달리 Queue가 비었을 때 NoSuchElementException 발생
+boolean offer(Object o)		//Queue에 객체를 저장
+Object poll()			//Queue에서 객체를 꺼내서 반환. 비어있으면 null을 반환
+Object peek()			//삭제없이 요소를 읽어 온다. Queue가 비어있으면 null 반환
+//Queue의 메서드
+```
+```java
+		Stack st = new Stack();
+		Queue q = new LinkedList();
+		
+		st.push("0");
+		st.push("1");
+		st.push("2");
+		
+		q.offer("0");
+		q.offer("1");
+		q.offer("2");
+
+		System.out.println("stack");
+		while(!st.empty()) {
+			System.out.println(st.pop());		//210
+		}
+		
+		System.out.println("Queue");
+		while(!q.isEmpty()) {
+			System.out.println(q.poll());		//012
+		}
 ```
