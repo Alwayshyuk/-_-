@@ -763,3 +763,54 @@ Collection인터페이스에는 Iterator(Iterator를 구현한 클래스의 인�
 
 boolean hasNext(): 읽어 올 요소가 남아있는지 확인한다. 있으면 true, 없으면 false를 반환한다.     
 Object next(): 다음 요소를 읽어온다. next()를 호출하기 전에 hasNext()를 호출해서 읽어 올 요소가 있는지 확인하는 것이 안전하다.     
+void remove(): next()로 읽어 온 요소를 삭제한다. next()를 호출한 다음에 remove()를 호출해야 한다.(선택적 기능)
+
+```java
+Collection c = new ArrayList();
+Iterator it = c.iterator();
+
+while(it.hasNext()){
+	System.out.println(it.next());	}
+```
+>ArrayList에 저장된 요소들을 출력하기 위한 코드는 이렇게 작성할 수 있다.
+
+ArrayList대신 Collection인터페이스를 구현한 다른 컬렉션 클래스에 대해서도 이와 동일한 코드를 사용할 수 있다.    
+> Iterator를 이용해서 컬렉션의 요소를 읽어오는 방법을 표준화했기 때문에 이처럼 코드의 재사용성을 높이는 것이 가능하다.     
+> 이처럼 공통 인터페이스를 정의해서 표준을 정의하고 구현하여 표준을 따르도록 함으로써       
+> 코드의 일관성을 유지하여 재사용성을 극대화하는 것이 객체지향 프로그래밍의 중요한 목적 중의 하나이다.
+
+Map인터페이스를 구현한ㄹ  컬렉션 클래스는 키key와 값value을 쌍pair으로 저장하고 있기 때문에 iterator()를 직접 호출할 수 없고,     
+그 대신 keySet()이나 entrySet()과 같은 메서드를 통해서 키와 값을 각각 따로 Set의 형태로 얻어 온 후에 다시 iterator()를 호출해야 Iterator를 얻을 수 있다.
+```java
+Map map = new HashMap();
+	...
+Iterator it = map.entrySet().iterator();	//아래 두 문장을 합친 것이다.
+//Set eSet = map.entrySet();
+//Iterator it = eSet.iterator();
+```
+```java
+import java.util.*;
+
+public class IteratorEx1 {
+
+	public static void main(String[] args) {
+		ArrayList list = new ArrayList();
+		list.add("1");
+		list.add("2");
+		list.add("3");
+		list.add("4");
+		list.add("5");
+
+		Iterator it = list.iterator();
+
+		while (it.hasNext()) {
+			Object obj = it.next();
+			System.out.println(obj);	//1 2 3 4 
+		}
+	}
+}
+```
+>List클래스들은 저장순서를 유지하기 때문에 Iterator를 이용해서 읽어 온 결과 역시     
+>저장 순서와 동일하지만 Set클래스들은 각 요소간의 순서가 유지 되지 않기 때문에     
+>Iterator를 이용해서 저장된 요소들을 읽어 와도 처음에 저장된 순서와 같지 않다.
+
