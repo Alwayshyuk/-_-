@@ -503,3 +503,263 @@ Object peek()			//삭제없이 요소를 읽어 온다. Queue가 비어있으면
 			System.out.println(q.poll());		//012
 		}
 ```
+#### Stack 직접 구현하기
+Stack은 Vector로부터 상속받아 구현하였다.     
+```java
+import java.util.*;
+
+public class MyStack extends Vector{
+	public Object push(Object item) {
+		addElement(item);
+		return item;
+	}
+	public Object pop() {
+		Object obj = peek();	//Stack에 저장된 마지막 요소를 읽어온다.
+		//만일 Stack이 비어있으면 peek() 메서드가 EmptyStackException을 발생시킨다.
+		//마지막 요소를 삭제한다. 배열의 index가 0부터 시작하므로 1을 빼준다.
+		removeElementAt(size()-1);
+		return obj;
+	}
+	public Object peek() {
+		int len = size();	
+		if(len == 0)
+			throw new EmptyStackException();
+		//마지막 요소를 반환한다. 배열의 index가 0부터 시작하므로 1을 빼준다.
+		return elementAt(len-1);
+	}
+	public boolean empty() {
+		return size() == 0;
+	}
+	public int search(Object o) {
+		int i = lastIndexOf(o);		//끝에서부터 객체를 찾는다.
+									//반환값은 저장된 위치(배열의 index) 이다.
+		if(i>=0)	//객체를 찾은 경우
+			return size() - 1;	//Stack은 맨 위에 저장된 객체의 index를 1로 정의하므로
+								//계산을 통해서 구한다.
+		return -1;	//헤당 객체를 찾지 못하면 -1을 반환한다.
+	}
+}
+```
+EmptyStackException은 RuntimeException이므로 따로 예외처리를 해주지 않아도 된다.
+
+#### 스택과 큐의 활용
+>스택의 활용 예 - 수식계산, 수식괄호검사, 워드프로세서의 undo/redo, 웹브라우저의 뒤로/앞으로              
+>큐의 활용 예 - 최근사용문서, 인쇄작업 대기목록, 버퍼buffer
+```java
+import java.util.*;
+
+public class StackEx1 {
+
+	public static Stack back = new Stack();
+	public static Stack forward = new Stack();
+
+	public static void main(String[] args) {
+
+		goURL("1.네이트");
+		goURL("2.야후");
+		goURL("3.네이버");
+		goURL("4.다음");
+		
+		printStatus();
+		
+		goBack();
+		System.out.println("= '뒤로' 버튼을 누른 후=");
+		printStatus();
+		
+		goBack();
+		System.out.println("= '뒤로' 버튼을 누른 후=");
+		printStatus();
+
+		goForward();
+		System.out.println("= '앞으로' 버튼을 누른 후=");
+		printStatus();
+
+		goURL("chobo.com");
+		System.out.println("= 새로운 주소로 이동 후=");
+		printStatus();
+	}
+
+	public static void printStatus() {
+		System.out.println("back:" + back);
+		System.out.println("forward:" + forward);
+		System.out.println("현재 화면은 '" + back.peek() + "'입니다.");
+		System.out.println();
+	}
+
+	public static void goURL(String url) {
+		back.push(url);
+		if (!forward.empty())
+			forward.clear();
+	}
+
+	public static void goForward() {
+		if (!(forward.empty())) {
+			back.push(forward.pop());
+		}
+	}
+
+	public static void goBack() {
+		if (!back.empty())
+			forward.push(back.pop());
+	}
+}
+```
+> 웹 브라우저의 '뒤로', '앞으로' 버튼의 기능을 구현한 것이다.
+```java
+import java.util.*;
+
+public class ExpValidCheck {
+
+	public static void main(String[] args) {
+		if (args.length != 1) {
+			System.out.println("Usage: java ExpValidCheck \"EXPRESSION\"");
+			System.out.println("Example : java ExpValidCheck\"((2+3)*1)+3\"");
+			System.exit(0);
+		}
+
+		Stack st = new Stack();
+		String expression = args[0];
+
+		System.out.println("expression: " + expression);
+
+		try {
+			for (int i = 0; i < expression.length(); i++) {
+				char ch = expression.charAt(i);
+
+				if (ch == '(') {
+					st.push(ch + "");
+				} else if (ch == ')') {
+					st.pop();
+				}
+			}
+			if (st.empty()) {
+				System.out.println("괄호 일치");
+			} else {
+				System.out.println("괄호 불일치");
+			}
+		} catch (EmptyStackException e) {
+			System.out.println("괄호 불일치");
+		}
+	}
+}
+```
+>입력한 수식의 괄호가 올바른지를 체크하는 예제다.    
+>'('를 만나면 스택에 넣고 ')'를 만나면 스택에서 '('를 꺼낸다.
+```java
+import java.util.*;
+
+public class QueueEx1 {
+
+	static Queue q = new LinkedList();
+	static final int MAX_SIZE = 5;
+
+	public static void main(String[] args) {
+		System.out.println("help를 입력하면ㄴ 도움말을 볼 수 있습니다.");
+
+		while (true) {
+			System.out.println(">>");
+
+			try {
+				// 화면으로부터 라인 단위로 입력받는다.
+				Scanner s = new Scanner(System.in);
+				String input = s.nextLine().trim();
+
+				if ("".equals(input))
+					continue;
+
+				if (input.equalsIgnoreCase("q")) {
+					System.exit(0);
+				} else if (input.equalsIgnoreCase("help")) {
+					System.out.println("help-도움말을 보여줍니다.");
+					System.out.println("q 또는 Q - 프로그램을 종료합니다.");
+					System.out.println("history - 최근에 입력한 명령어를 " + MAX_SIZE + "개 보여줍니다.");
+				} else if (input.equalsIgnoreCase("history")) {
+					int i = 0;
+					// 입력받은 명령어를 저장하고,
+					save(input);
+
+					// LinkedList의 내용을 보여준다.
+					LinkedList tmp = (LinkedList) q;
+					ListIterator it = tmp.listIterator();
+
+					while (it.hasNext())
+						System.out.println(++i + "." + it.next());
+				} else {
+					save(input);
+					System.out.println(input);
+				} // if(input.equalsIgnoreCase("q")) {
+			} catch (Exception e) {
+				System.out.println("입력 오류");
+			}
+		}
+	}
+	public static void save(String input) {
+		// queue에 저장한다.
+		if (!"".equals(input))
+			q.offer(input);
+
+		// queue의 최대크기를 넘으면 제일 처음 입력된 것을 삭제한다.
+		if (q.size() > MAX_SIZE)
+			q.remove();
+	}
+}
+```
+> 유닉스의 history명령어를 Queue를 이용해서 구현한 것이다.
+
+#### PriorityQueue
+저장한 순서에 관계없이 우선순위priority가 높은 것부터 꺼내게 된다는 특징이 있다.    
+그리고 null은 저장할 수 없고, 저장한다면 NullPointerException이 발생한다.     
+PriorityQueue는 저장공간으로 배열을 사용하며, 각 요소를 '힙'이라는 자료구조의 형태로 저장한다.    
+힙은 이진 트리의 한 종류로 가장 큰 값이나 가장 작은 값을 빠르게 찾을 수 있다는 특징이 있다.(자료구조의 힙과는 다른 것이다.)
+
+```java
+import java.util.*;
+
+public class PriorityQueueEx {
+
+	public static void main(String[] args) {
+		Queue pq = new PriorityQueue();
+		pq.offer(3);	//pq.offer(new Integer(3));  오토박싱
+		pq.offer(1);
+		pq.offer(5);
+		pq.offer(2);
+		pq.offer(4);
+		
+		System.out.println(pq); 				//[1,2,3,4,5]
+		System.out.println(pq.poll());			//1
+		
+		Object obj = null;
+		
+		//PriorityQueue에 저장된 요소를 하나씩 꺼낸다.
+		while((obj = pq.poll()) != null)	//2 3 4 5 (1은 이미 꺼냄)
+			System.out.println(obj);
+	}
+
+}
+```
+저장순서가 3,1,5,2,4 인데도 출력결과는 1,2,3,4,5 이다.    
+우선순위는 숫자가 작을수록 높은 것이므로 1이 가장 먼저 출력된 것이다.    
+참조변수 pq를 출력하면 PriorityQueue가 내부적으로 가지고 있는 배열의 내용이 출력되는데,    
+저장한 순서와 다르게 저장되었다. 이는 힙이라는 주료구조의 형태로 저장된 것이라 그렇다.
+
+#### Deque(Double - Ended Queue)
+Queue의 변형으로, 한 쪽 끝으로만 추가/삭제할 수 있는 Queue와 달리, Deque은 양쪽 끝에 추가/삭제가 가능하다.     
+
+>Deque: offerLast()(끝에 저장), pollLast(끝에서 삭제), pollFirst(앞에서 삭제), offerFirst(앞에 저장)     
+>Stack: push()(끝에 저장),      pop()(끝에서 추출),  peek()(끝에서 반환)     
+>Queue: offer()(끝에 저장), poll()(앞에서 추출),  peek()(앞에서 반환)     
+
+## Iterator, ListIterator, Enumeration
+Iterator, ListIterator, Enumeration 모두 컬렉션에 저장된 요소를 접근하는데 사용되는 인터페이스다.     
+Enumeration은 Iterator의 구버젼이며, ListIterator는 Iterator의 기능을 향상시킨 것이다.
+
+#### Iterator 
+컬렉션 프레임웍에서는 컬렉션에 저장된 요소들을 읽어오는 방법을 표준화하였다.       
+컬렉션에 저장된 각 요소에 접근하는 기능을 가진 Iterator인터페이스를 정의하고,       
+Collection인터페이스에는 Iterator(Iterator를 구현한 클래스의 인스턴스)를 반환하는 iterator()를 정의하고 있다.     
+
+> 컬렉션 클래스에 대해 iterator()를 호출하여 Iterator를 얻은 다음       
+> 반복문, 주로 while문을 사용해서 컬렉션 클래스의 요소들을 읽어 올 수 있다.     
+
+boolean hasNext(): 읽어 올 요소가 남아있는지 확인한다. 있으면 true, 없으면 false를 반환한다.     
+Object next(): 다음 요소를 읽어온다. next()를 호출하기 전에 hasNext()를 호출해서 읽어 올 요소가 있는지 확인하는 것이 안전하다.     
