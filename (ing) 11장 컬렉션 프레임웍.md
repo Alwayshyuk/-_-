@@ -653,10 +653,10 @@ public class MyStack extends Vector{
 	}
 	public int search(Object o) {
 		int i = lastIndexOf(o);		//끝에서부터 객체를 찾는다.
-									//반환값은 저장된 위치(배열의 index) 이다.
+						//반환값은 저장된 위치(배열의 index) 이다.
 		if(i>=0)	//객체를 찾은 경우
 			return size() - 1;	//Stack은 맨 위에 저장된 객체의 index를 1로 정의하므로
-								//계산을 통해서 구한다.
+						//계산을 통해서 구한다.
 		return -1;	//헤당 객체를 찾지 못하면 -1을 반환한다.
 	}
 }
@@ -846,7 +846,7 @@ public class PriorityQueueEx {
 		pq.offer(2);
 		pq.offer(4);
 		
-		System.out.println(pq); 				//[1,2,3,4,5]
+		System.out.println(pq); 			//[1,2,3,4,5]
 		System.out.println(pq.poll());			//1
 		
 		Object obj = null;
@@ -1020,7 +1020,7 @@ public class IteratorEx2 {
 		while(it.hasNext())
 			copy1.add(it.next());
 		System.out.println(original);		//[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-		System.out.println(copy1);			//[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+		System.out.println(copy1);		//[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 		
 		it = original.iterator();		//Iterator는 재사용이 안되므로, 다시 얻어와야 한다.
 		
@@ -1053,7 +1053,7 @@ public class MyVector2 extends MyVector implements Iterator{
 			
 			for(int i = 0; it.hasNext(); i++) {
 				if(i!=0) tmp+=", ";
-				tmp += it.next();			//tmp+=next().toString();
+				tmp += it.next();		//tmp+=next().toString();
 			}
 			return "[" + tmp + "]";
 		}
@@ -1076,7 +1076,7 @@ public class MyVector2 extends MyVector implements Iterator{
 				throw new IllegalStateException();
 			} else {
 				remove(lastRet);
-				cursor--;					//삭제 후에 cursor의 위치를 감소시킨다.
+				cursor--;				//삭제 후에 cursor의 위치를 감소시킨다.
 				lastRet = -1;				//lastRet의 값을 초기화 한다.
 			}
 		}
@@ -1241,4 +1241,75 @@ public class ArraysEx {
 	}
 }
 ```
+## Comparator와 Comparable
+Arrays.sort()는 Character클래스의 Comparable의 구현에 의해 정렬된 것이다.    
+Comparator와 Comparable은 모두 인터페이스로 컬렉션을 정렬하는데 필요한 메서드를 정의하고 있다.
+```java
+public interface Comparator{
+	int compare (Object o1, Object o2);
+	boolean equals(Object obj);	}
+	
+public interface Comparable{
+	public int compareTo(Object o);	}
+```
+> Comparable은 java.lang패키지에 있고, Comparator는 java.util패키지에 있다.
 
+compare()과 compareTo()는 선언 형태와 이름이 약간 다를 뿐 두 객체를 비교한다는 같은 기능을 목적으로 고안된 것이다.     
+둘 다 객체를 비교해서 음수, 0, 양수를 반환하도록 구현해야한다.     
+```java
+public final class Integer extends Number implements Comparable {
+...
+  public int compareTo(Object o)   {
+  	return compareTo((Integer)o);
+  }
+  public int compareTo(Integer anotherInteger)  {
+  	int thisVal = this.value;
+	int anotherVal = anotherInteger.value;
+	//비교하는 값이 크면 -1, 같으면 0, 작으면 1을 반환한다.
+	return (thisVal<anoterVal? -1 : (thisVal == anotherVal ? 0 : 1);
+  }	}
+  ```
+위의 코드는 Integer클래스의 일부인데 Comparable의 compareTo(Object o)를 구현한 것을 볼 수 있다.     
+Comparable을 구현한 클래스들이 기본적으로 오름차순으로 정렬되어 있지만,    
+내림차순으로 정렬한다던가 아니면 다른 기준에 의해 정렬되도록 하고 싶을 때 Comparator를 구현해서 정렬기준을 제공할 수 있다.
+>Comparable 기본 정렬기준을 구현하는데 사용.     
+>Comparator 기본 정렬기준 외에 다른 기준으로 정렬하고자할 때 사용.
+
+```java
+public class ComparatorEx {
+	public static void main(String[] args) {
+		String[] strArr = {"cat", "Dog", "lion", "tiger"};
+		
+		Arrays.sort(strArr);	//String의 Comparable구현에 의한 정렬
+		System.out.println(Arrays.toString(strArr));		//[Dog, cat, lion, tiger]
+		
+		Arrays.sort(strArr, String.CASE_INSENSITIVE_ORDER);		//대소문자 구분안함
+		System.out.println(Arrays.toString(strArr));		//[cat, Dog, lion, tiger]
+		
+		Arrays.sort(strArr, new Descending());
+		System.out.println(Arrays.toString(strArr));		//[tiger, lion, cat, Dog]
+	}
+}
+class Descending implements Comparator{
+	public int compare(Object o1, Object o2) {
+		if(o1 instanceof Comparable && o2 instanceof Comparable) {
+			Comparable c1 = (Comparable) o1;
+			Comparable c2 = (Comparable) o2;
+			return c1.compareTo(c2) * -1;		//-1을 곱해서 기본정렬방식의 역으로 변경한다.
+								//또는 c2.compareTo(c1)와 같이 비교 객체의 순서를 바꿔도 된다.
+		}
+		return -1;
+	}
+}
+```
+> Arrays.sort()는 배열을 정렬할 때, Comparator를 지정해주지 않으면 저장하는 객체(주로 Comparable을 구현한 개체)에 구현된 내용에 따라 정렬된다.
+
+```java
+static void sort(Object[] a)	//객체 배열에 저장된 객체가 구현한 Comparable에 의한 정렬
+static void sort(Object[] a, Comparator c)	//지정한 Comparator에 의한 정렬
+
+public static final Comparator CASE_INSENSITIVE_ORDER
+```
+String의 Comparable구현은 문자열이 사전 순으로 정렬되도록 작성되어 있다.      
+대소문자를 구분하지 않고 비교하는 Comparator를 상수의 형태로 제공한다.     
+이 Comparator를 이용하면, 문자열을 대소문자 구분없이 정렬할 수 있다.     
