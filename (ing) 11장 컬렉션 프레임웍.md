@@ -328,6 +328,127 @@ public class VectorEx1 {
 
 }
 ```
+>다음 예제는 Vector클래스의 실제코드를 바탕으로 이해하기 쉽게 재구성한 것이다.
+```java
+public class MyVector {
+	Object[] data = null;	//객체들 담기 위한 객채배열을 선언한다.
+	int capacity = 0;
+	int size = 0;
+	
+	public MyVector(int capacity) {
+		if(capacity<0)
+			throw new IllegalArgumentException("유효하지 않은 값입니다." + capacity);
+		
+		this.capacity = capacity;
+		data = new Object [capacity];
+	}
+	public MyVector() {
+		this(10);
+	}
+	
+	//최소한의 저장공간(capacity)를 확보하는 메서드
+	public void ensureCapacity(int minCapacity) {
+		if(minCapacity-data.length>0)
+			setCapacity(minCapacity);
+	}
+	
+	public boolean add(Object obj) {
+		//새로운 객체를 저장하기 전에 저장할 공간을 확보한다.
+		ensureCapacity(size+1);
+		data[size++] = obj;
+		return true;
+	}
+	public Object get(int index) {
+		if(index<0 || index>=size)
+			throw new IndexOutOfBoundsException("범위를 벗어났습니다.");
+		return data[index];
+	}
+	public Object remove(int index) {
+		Object oldObj = null;
+		
+		if(index<0 || index>=size)
+			throw new IndexOutOfBoundsException("범위를 벗어났습니다.");
+		oldObj = data[index];
+		
+		//삭제하고자 하는 객체가 마지막 객체가 아니라면, 배열복사를 통해 빈자리를 채워줘야 한다.
+		if(index != size-1)
+			System.arraycopy(data, index+1, data, index, size-index-1);
+		
+		//마지막 데이터를 null로 한다. 배열은 0부터 시작하므로 마지막 요소는 index가 size-1이다.
+		data[size-1] = null;
+		size--;
+		return oldObj;
+	}
+	public boolean remove(Object obj) {
+		for(int i = 0; i<size; i++) {
+			if(obj.equals(data[i])) {
+				remove(i);
+				return true;
+			}
+		}
+		return false;
+	}
+	public void trimToSize() {
+		setCapacity(size);
+	}
+	private void setCapacity(int cpapcity) {
+		if(this.capacity == capacity)	return;
+		
+		Object[] tmp = new Object[capacity];
+		System.arraycopy(data, 0, tmp, 0, size);
+		data = tmp;
+		this.capacity = capacity;
+	}
+	public void clear() {
+		for(int i = 0; i<size; i++)
+			data[i] = null;
+		size = 0;
+	}
+	public Object[] toArray() {
+		Object[] result = new Object[size];
+		System.arraycopy(data, 0, result, 0, size);
+		
+		return result;
+	}
+	public boolean isEmpty() { return size==0;}
+	public int capacity()	{return capacity;}
+	public int size()		{return size;}
+	
+	//List인터페이스로부터 상속받은 메서드들
+	
+	//public int size();
+	//public boolean isEmpty();
+	public boolean contains(Object o)	{return false;}
+	public Iterator iterator()	{return null;}
+	//public Object[] toArray();
+	public Object[] toArray(Object a[]) {return null;}
+	//public boolean add(Object o);
+	//public boolean remove(Object o);
+	public boolean containsAll(Collection c) { return false; }
+	public boolean addAll(Collection c)	{return false;}
+	public boolean addAll(int index, Collection c)	{return false;}
+	public boolean removeAll(Collection c)	{return false;}
+	public boolean retainAll(Collection c)	{return false;}
+	//public void clear();
+	public boolean equals(Object o)	{return false;}
+	//public int hashCode();
+	//public Object get(int index);
+	public Object set(int index, Object element)	{return null;}
+	public void add(int index, Object element) {}
+	//public Object remove(int index);
+	public int indexOf(Object o) {return -1;}
+	public int lastIndexOf(Object o)	{return -1;}
+	public ListIterator listIterator()	{return null;}
+	public ListIterator listIterator(int index)	{return null;}
+	public List subList (int fromIndex, int toIndex)	{return null;}
+	
+	default void sort(Comparator c)	{////}
+	default Spliterator spliterator()	{////}
+	default void replaceAll(UnaryOperator operator)	{////}
+	}
+}
+```
+
 > ArrayList나 Vector 같이 배열을 이용한 자료구조는 데이터를 읽어오고 저장하는 데는 효율이 좋지만,    
 > 용량을 변경해야할 때는 새로운 배열을 생성한 후 기존의 배열로부터 데이터를 복사해야하기 때문에 효율이 떨어진다.
 
@@ -814,3 +935,155 @@ public class IteratorEx1 {
 >저장 순서와 동일하지만 Set클래스들은 각 요소간의 순서가 유지 되지 않기 때문에     
 >Iterator를 이용해서 저장된 요소들을 읽어 와도 처음에 저장된 순서와 같지 않다.
 
+#### ListIterator와 Enumeration
+Enumeration은 Itrator의 구버젼이므로 가능하면 Iterator를 사용하는 것이 좋다.     
+ListIterator는 Iterator를 상속받아서 기능을 추가한 것으로, 컬렉션의 요소에 접근할 때     
+Iterator는 단방향으로만ㄴ 이동할 수 있는데 반해 ListIterator는 양방향으로의 이동이 가능하다.     
+다만 ArrayList나 LinkedList와 같이 List인터페이스를 구현한 컬렉션에서만 사용할 수 있따.
+
+* Enumeration인터페이스의 메서드
+```java
+boolean hasMoreElements()	//읽어 올 요소가 남아있는지 확인한다. Iterator의 hasNext()와 같다.
+Object nextElement()		//다음 요소를 읽어온다. nextElement()를 호출하기 전에 hasMoreElements()를 호출해서 
+				//읽어올 요소가 남았는지 확인하는 것이 안전하다. Iterator의 next()와 같다.
+```
+>Enumeration과 Iterator는 메서드이름만 다를 뿐 기능은 같다.
+
+* ListIterator의 메서드
+```java
+void add(Object o)	//컬렉션에 새로운 객체o를 추가한다(선택적 기능)
+boolean hasNext()	//읽어 올 다음 요소가 남았는 지 확인한다.
+boolean hasPrevious()	//읽어 올 이전 요소가 남았는 지 확인한다.
+Object next()		//다음 요소를 읽어온다. 호출 전 hasNext()를 호출해서 확인해보는 것이 안전하다.
+Object Previous()	//이전 요소를 읽어온다. 호출 전 hasPrevious()를 호출해서 확인해보는 것이 안전하다.
+int nextIndex()		//다음 요소의 index를 반환한다
+int previousIndex()	//이전 요소의 index를 반환한다.
+void remove()			//선택적 기능
+//next() 또는 previous()로 읽어 온 요소를 삭제한다. 반드시 next()나 previous()를 먼저 호출하고 이 메서드를 호출해야한다.
+void set(Object o)		//선택적 기능
+//next()나 previous()로 읽어 온 요소를 지정된 객체o로 변경한다. 
+//반드시 next()나 previous()를 먼저 호출하고 이 메서드를 호출해야한다.
+```
+>선택적 기능이라고 표시된 것들은 반드시 구현하지 않아도 된다.    
+>예를 들어, Iterator인터페이스를 구현하는 클래스에서 remove()는 선택적인 기능이므로 구현하지 않아도 된다.     
+>그렇다하더라도 인터페이스로부터 상속받은 메서드는 추상메서드라 메서드의 몸통을 반드시 만들어 주어야 한다
+```java
+public void remove(){
+	throw new UmsupportedOperationException();	}
+```
+> 단순히 public void remove(){}; 와 같이 구현하는 것보다 예외를 던져 구현되지 않았음을 호출하는 쪽에 알리는 것이 좋다.     
+> Iterator의 remove()는 단독으로 쓰일 수 없고, next()와 같이 써여한다.   
+> 특정위치의 요소를 삭제하는 것이 아니라 읽어 온 것을 삭제하기 때문이다. next()없이 호출하면 IllegalStateException이 발생한다.     
+```java
+import java.util.*;
+
+public class ListIteratorEx1 {
+
+	public static void main(String[] args) {
+		ArrayList list = new ArrayList();
+		
+		list.add("1");
+		list.add("2");
+		list.add("3");
+		list.add("4");
+		list.add("5");
+		
+		ListIterator it = list.listIterator();
+		
+		while(it.hasNext()) {
+			System.out.print(it.next());		//12345
+		}
+		System.out.println();
+		while(it.hasPrevious()) {
+			System.out.print(it.previous());	//54321
+		}
+	}
+}
+```
+> Iterator는 단방향으로만 이동하기 때문에 컬렉션의 마지막 요소에 다다르면 더 이상 사용할 수 없지만,    
+> ListIterator는 양방향으로 이동하기 때문에 각 요소간의 이동이 자유롭다.
+```java
+import java.util.*;
+
+public class IteratorEx2 {
+
+	public static void main(String[] args) {
+		ArrayList original = new ArrayList(10);
+		ArrayList copy1 = new ArrayList(10);
+		ArrayList copy2 = new ArrayList(10);
+
+		for(int i = 0 ; i<10; i++)
+			original.add(i+"");
+		
+		Iterator it = original.iterator();
+		
+		while(it.hasNext())
+			copy1.add(it.next());
+		System.out.println(original);		//[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+		System.out.println(copy1);			//[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+		
+		it = original.iterator();		//Iterator는 재사용이 안되므로, 다시 얻어와야 한다.
+		
+		while(it.hasNext()) {
+			copy2.add(it.next());
+			it.remove();
+		}
+		System.out.println(original);		//[]
+		System.out.println(copy2);			//[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+	}
+}
+```
+```java
+package practice;
+import java.util.*;
+
+public class MyVector2 extends MyVector implements Iterator{
+		int cursor = 0;
+		int lastRet = -1;
+		
+		public MyVector2(int capacity) {
+			super(capacity);
+		}
+		public MyVector2() {
+			super(10);
+		}
+		public String toString() {
+			String tmp = "";
+			Iterator it = iterator();
+			
+			for(int i = 0; it.hasNext(); i++) {
+				if(i!=0) tmp+=", ";
+				tmp += it.next();			//tmp+=next().toString();
+			}
+			return "[" + tmp + "]";
+		}
+		public Iterator iterator()	{
+			cursor = 0;			//cursor와 lastRet을 초기화 한다.
+			lastRet = -1;
+			return this;
+		}
+		public boolean hasNext() {
+			return cursor != size();
+		}
+		public Object next() {
+			Object next = get(cursor);
+			lastRet = cursor++;
+			return next;
+		}
+		public void remove() {
+			//더 이상 삭제할 것이 없으면 IllegalStateException을 발생시킨다.
+			if(lastRet == -1) {
+				throw new IllegalStateException();
+			} else {
+				remove(lastRet);
+				cursor--;					//삭제 후에 cursor의 위치를 감소시킨다.
+				lastRet = -1;				//lastRet의 값을 초기화 한다.
+			}
+		}
+}
+```
+cursor는 앞으로 읽어 올 요소의 위치를 저장하는데 사용되고, lastRet은 마지막으로 읽어 온 요소의 위치index를 저장하는데 사용된다.     
+그래서 lastRet은 항상 cursor보다 1 작은 값이 저장되고 remove()를 호출하면 이미 next()를 통해서 읽은 위치의 요소,      
+즉 lastRet에 저장된 값의 위치에 있는 요소를 삭제하고 lastRet의 값을 -1로 초기화 한다.      
+만일 next()로 호출하지 않고 remove()를 호출하면 lastRet의 값은 -1이 되어 IllegalStateException이 발생한다.    
+remove()는 next()로 읽어 온 객체를 삭제하는 것이기 때문에 remove()를 호출하기 전에는 반드시 next()가 호출된 상태여야 한다.
