@@ -1313,3 +1313,230 @@ public static final Comparator CASE_INSENSITIVE_ORDER
 String의 Comparable구현은 문자열이 사전 순으로 정렬되도록 작성되어 있다.      
 대소문자를 구분하지 않고 비교하는 Comparator를 상수의 형태로 제공한다.     
 이 Comparator를 이용하면, 문자열을 대소문자 구분없이 정렬할 수 있다.     
+
+## HashSet
+ set인터페이스를 구현한 컬렉션이며, set인터페이스의 특징대로 HashSet은 중복된 요소를 저장하지 않는다.     
+ HashSet에 새로운 요소를 추가할 때 add메서드나 addAll메서드를 사용하는데     
+ 만일 HashSet에 이미 저장되어 있는 요소와 중복된 요소를 추가하고자 한다면 이 메서드들은 false를 반환한다.    
+ 이러한 HashSet의 특징을 이용하면 컬렉션 내의 중복 요소들을 쉽게 제거할 수 있따.     
+ ArrayList와 같이 List인터페이스를 구현한 컬렉션과 달리 HashSet은 저장순서를 유지하지 않으므로 저장 순서를 유지하고자 한다면 LinkedHashSet을 이용한다.
+ 
+ ```java
+ HasdhSet()				//HashSet객체를 생성한다.
+ HashSet(Collection c)			//주어진 컬렉션을 포함하는 HashSet객체를 생성한다.
+ HashSet(int initialCapacity)		//주어진 값을 초기용량으로하는 HashSet객체를 생성한다.
+ HashSet(int initialCapacity, float loadFactor)		/초기 용량과 load factor를 지정하는 생성자.
+ boolean add(Object o)			//새로운 객체를 저장한다.
+ boolean addAll(Collection c)		//주어진 컬렉션에 저장된 모든 객체들을 추가한다(합집합)
+ void clear()				//저장된 모든 객체를 삭제한다.
+ Object clone()				//HashSet을 복제해서 반환한다.(얕은 복사)
+ boolean containsAll(Collection c)	//주어진 컬렉션에 저장된 모든 객체들을 포함하고 있는지 알려준다.
+ boolean isEmpty()			//HashSet이 비어있는지 알려준다.
+ Iterator iterator()			//Iterator를 반환한다.
+ boolean remove(Object o)		//지정된 객체를 HashSet에서 삭제한다.
+ boolean removeAll(Collection c)	//주어진 컬렉션에 저장된 모든 객체와 동일한 것들을 HashSet에서 삭제한다.
+ boolean retainAll(Collection c)	//주어진 컬렉션에 저장된 객체와 동일한 것만 남기고 삭제한다.(교집합)
+ int size()				//저장된 객체의 개수를 반환한다.
+ Object[] toArray()			//저장된 객체들을 객체배열의 형태로 반환한다.
+ Object[] toArray(Object[] a)		//저장된 객체들을 주어진 객체배열에 담는다.
+ ```
+ >load factor는 컬렉션 클래스에 저장공간이 가득 차기 전에 미리 용량을 확보하기 위한 것으로 0.8로 지정하면 80%찻을 때 용량을 두배로 늘린다.      
+```java
+import java.util.*;
+
+public class HashSetEx1 {
+
+	public static void main(String[] args) {
+
+		Object[] arr = {"1", new Integer(1), "2", "2", "3", "3", "4","4","4"};
+		Set set = new HashSet();
+		
+		for(int i = 0; i<arr.length; i++) {
+			set.add(arr[i]);				//HastSet에 arr 요소들을 저장한다.
+		}
+		System.out.println(set);			//[1,1,2,3,4}
+	}
+}
+```
+> set을 구현한 컬렉션 클래스는 List를 구현한 컬렉션 클래스와 달리 순서를 유지하지 않기 때문에 저장한 순서와 다를 수 있다.      
+> 중복을 제거하는 동시에 저장한 순서를 유지하고자 한다면 HashSet대신 LinkedHashSet을 사용해야한다.
+```java
+public class HashSetLotto {
+
+	public static void main(String[] args) {
+		Set set = new HashSet();
+		
+		for(int i = 0 ; set.size()<6 ; i++) {
+			int num = (int)(Math.random()*45)+1;
+			set.add(new Integer(num));
+		}
+		List list = new LinkedList(set);		//LinkedList(Colletion c)
+		Collections.sort(list);					//Collections.sort(List list)
+		System.out.println(list);				//[8, 17, 19, 20, 21, 26]
+	}
+}
+```
+번호를 크기순으로 정렬하기 위해서 COllections클래스의 sort(List list)를 사용했다.     
+이 메서드는 인자로 List인터페이스 타입을 필요로 하기 때문에       
+LinkedList클래스의 생성자 LinkedList(Collection c)를 이용해서 HashSet에 저장된 객체들을 LinkedList에 담아서 처리했다.      
+```java
+public class Bingo {
+
+	public static void main(String[] args) {
+		Set set = new HashSet();
+		//Set set = new LinkedHashSet();
+		
+		int[][] board = new int[5][5];
+		
+		for(int i = 0; set.size()<25; i++) {
+			set.add((int)(Math.random()*50)+1+ "");
+		}
+		
+		Iterator it = set.iterator();
+		
+		for(int i =0; i<board.length; i++) {
+			for(int j = 0; j<board[i].length; j++) {
+				board[i][j] = Integer.parseInt((String)it.next());
+				System.out.print((board[i][j]<10? "  " : " ")+ board[i][j]);
+			}
+			System.out.println();
+		}
+	}
+}
+```
+next()는 반환값이 Object타입이므로 형변환해서 원래의 타입으로 되돌려 놓아야 한다.     
+```java
+public class HashSetEx3 {
+
+	public static void main(String[] args) {
+		
+		HashSet set = new HashSet();
+		
+		set.add("abc");
+		set.add("abc");
+		set.add(new Person("David",10));
+		set.add(new Person("David",10));
+		
+		System.out.println(set);			//[David:10, abc, David:10]
+	}
+}
+class Person{
+	String name;
+	int age;
+	
+	Person(String name, int age){
+		this.name = name;
+		this.age = age;
+	}
+	public String toString() {
+		return name + ":" + age;
+	}
+}
+```
+실행 결과를 보면 두 인스턴스의 name과 age가 같음에도 서로 다른 것으로 인식하여 두번 출력되었다.     
+```java
+public class HashSetEx4 {
+
+	public static void main(String[] args) {
+		HashSet set = new HashSet();
+		
+		set.add(new String("abc"));
+		set.add(new String("abc"));
+		set.add(new Person2("David", 10));
+		set.add(new Person2("David", 10));
+		
+		System.out.println(set);			//[abc, David:10]
+	}
+}
+class Person2{
+	String name;
+	int age;
+	
+	Person2(String name, int age){
+		this.name = name;
+		this.age = age;
+	}
+	public boolean equals(Object obj) {
+		if(obj instanceof Person2) {
+			Person2 tmp = (Person2)obj;
+			return name.equals(tmp.name) && age == tmp.age;
+		}
+		return false;
+	}
+	public int hashCode() {
+		return (name + age).hashCode();
+		//return Object.hash(name, age);	//int hash(Object...values) 이걸 쓰는 걸 권장 
+	}
+	public String toString(){
+		return name +":"+age;
+	}
+}
+```
+HashSet의 add메서드는 새로운 요소를 추가하기 전에 기존에 저장된 요소와 같은 것인지 판별하기 위해      
+추가하려는 요소의 equals()와 hashCode()를 호출하기 때문에 equals()와 hashCode()를 목적에 맞게 오버라이딩해야 한다.      
+* 오버라이딩을 통해 작성된 hashCode()는 다음의 세 조건을 만족시켜야 한다.       
+> 1. 실행 중인 애플리케이션 내의 동일한 객체에 대하여 여려번 hashCode()를 호출해도 동일한 int값을 반환해야 한다.     
+> 실행시마다 동일한 int값을 반환할 필요는 없다.(equals메서드의 구현에 사용된 멤버변수의 값이 바뀌지 않는다고 가정한다)      
+```java
+Person2 p = new Person2("David", 10);
+Person2 p1 = new Person2("David", 10);
+int hashCode1 = p.hashCode();
+int hashCode2 = p.hashCode();
+p.age = 20;
+int hashCode3 = p.hashCode();
+
+boolean b  = p.equals(p2);
+int hashCode3 = p.hashCode();
+int hashCode4 = p.hashCode();
+```
+hashCode1과 hashCode2의 값은 항상 일치해야하지만 두 값이 매번 실행때마다 반드시 같은 값일 필요는 없다.     
+> String클래스는 문자열의 내용으로 해시코드를 만들어 내기 때문에 내용이 같은 문자열에 대한 hashCode() 호출은 항상 동일한 해시코드를 반환한다.     
+
+>2. equals메서드를 이용한 비교에 의해서 true를 얻은 두 객체에 대해 각각 hashCode()를 호출해서 얻은 결과는 반드시 같아야 한다.
+>3. equals메서드를 호출했을 때 false를 반환하는 두 객체는 hashCode() 호출에 대해 같은 int값을 반환하는 경우가 있어도 괜찮지만,     
+>해싱hashing을 사용하는 컬렉션의 성능을 향상시키기 위해서는 다른 int값을 반환하는 것이 좋다.
+서로 다른 객체에 대해서 해드코드값(hashCode()를 호출한 결과)이 중복되는 경우가 많아질수록      
+해싱을 사용하는 Hashtable, HashMap과 같은 컬렉션의 검색속도가 떨어진다.
+```java
+public class HashSetEx5 {
+
+	public static void main(String[] args) {
+		HashSet setA = new HashSet();
+		HashSet setB = new HashSet();
+		HashSet setHab = new HashSet();
+		HashSet setKyo = new HashSet();
+		HashSet setCha = new HashSet();
+		
+		setA.add("1"); setA.add("2"); setA.add("3");
+		setA.add("4"); setA.add("5");
+		System.out.println(setA);			//[1,2,3,,4,5]
+		
+		setB.add("4"); setB.add("5"); setB.add("6");
+		setB.add("7"); setB.add("8");
+		System.out.println(setB);			//[4,5,6,7,8]
+		
+		Iterator it = setB.iterator();
+		while(it.hasNext()) {
+			Object tmp = it.next();
+			if(setA.contains(tmp))
+				setKyo.add(tmp);
+		}
+		it = setA.iterator();
+		while(it.hasNext()) {
+			Object tmp = it.next();
+			if(!setB.contains(tmp))
+				setCha.add(tmp);
+		}
+		it = setA.iterator();
+		while(it.hasNext())
+			setHab.add(it.next());
+		it = setB.iterator();
+		while(it.hasNext())
+			setHab.add(it.next());
+		
+		System.out.println(setKyo);		//[4,5]
+		System.out.println(setHab);		//[1,2,3,4,5,6,7,8]
+		System.out.println(setCha);		//[1,2,3]
+	}
+}
+```
