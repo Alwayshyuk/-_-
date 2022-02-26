@@ -1540,3 +1540,133 @@ public class HashSetEx5 {
 	}
 }
 ```
+## TreeSet
+TrreSet은 이진 검색 트리(binary search tree)라는 자료구조의 형태로 데이터를 저장하는 컬렉션 클래스다.     
+이진 검색 트리는 정렬, 검색, 범위검색에 높은 성능을 보이는 자료구조이며    
+TreeSet은 이진 검색 트리의 성능을 향상시킨 '레드-블랙 트리'로 구현되어 있다.   
+set인터페이스를 구현하여 중복된 데이터의 저장을 허용하지 않으며 정렬된 위치에 저장하므로 저장순서를 유지하지도 않는다.     
+이진 트리는 LinkedList처럼 여러 개의 노드node가 서로 연결된 구조로, 각 노드에 최대 2개의 노드를 연결할 수 있으며      
+루트root라고 불리는 하나의 노드에서부터 시작해서 계속 확장해 나갈 수 있다.     
+위 아래로 연결된 노드를 부모-자식관계에 있다고 하며, 위의 노드를 부모노드, 아래 노드를 자식노드 라고 한다.     
+부모-자식관계는 상대적인 것이며 하나의 부모 노드는 최대 두 개의 자식노드와 연결될 수 있다.
+```java
+class TreeNode {
+	TreeNode left;		//왼쪽 자식노드
+	Object element;		//객체를 저장하기 위한 참조변수
+	TreeNode right;		//오른쪽 자식노드
+```
+데이터를 저장하기 위한 Object타입의 참조변수 하나와 두 개의 노드를 참조하기 위한 두 개의 참조변수를 선언했다.     
+이진 검색 트리는 부모노드의 왼쪽에는 부모노드보다 작은 값을, 오른쪽에는 큰 값의 자식노드를 저장하는 이진트리다.
+컴퓨터는 스스로 값을 비교하지 못하므로 TreeSet에 저장되는 객체가 Comparable을 구현하던가,    
+TreeSet에게 Comparator를 제공해서 두 객체를 비교할 방법을 알려줘야 한다.    
+그렇지 않으면 TreeSet에 객체를 저장할 때 예외가 발생한다.     
+트리는 데이터를 순차적으로 저장하는 것이 아니라 저장위치를 찾아서 저장하므로 삭제하는 경우     
+트리의 일부를 재구성해야하므로 LinkedList보다 데이터의 추가/삭제 시간은 더 걸린다.      
+대신 배열이나 LinkedList에 비해 검색과 정렬기능이 더 뛰어나다.
+```java
+TreeSet()					//기본 생성자
+TreeSet(Collection c)				//주어진 컬렉션을 저장하는 TreeSet 생성
+TreeSet(Comparator comp)			//주어진 정렬조건으로 정렬하는 TreeSet 생성
+TreeSet(SortedSet s)				//주어진 SortedSet을 구현한 컬렉션을 저장하는 TreeSet을 생성
+boolean add(Object o)				//지정된 객체o 또는 컬렉션 c의 객체들을 Collection에 추가
+boolean addAll(Collection c)
+Object ceiling(Object o)			//지정된 객체와 같은 객체를 반환, 없으면 큰값을 가진 객체 중 가까운 값을 반환, 없으면 null
+void clear()					//저장된 모든 객체를 삭제한다.
+Object clone()					//TreeSet을 복제하여 반환한다.
+Comparator comparator()				//TreeSet의 정렬기준Comparator를 반환한다.
+boolean contains(Object o)			//지정된 객체o 또는 Collection의 객체들이 포함되어 있는지 확인한다.
+boolean containsAll(Collection c)
+NavigableSet descendingSet()			//TreeSet에 저장된 요소들을 역순으로 정렬해서 반환
+Object first()					//정렬된 순서에서 첫 번째 객체를 반환한다.
+Object floor(Object o)				//지정된 객체와 같은 객체를 반환. 없으면 작은 값을 가진 객체 중 가까운 값을 반환, 없으면 null
+SortedSet headSet(Object toElement)		//지정된 객체보다 작은 값의 객체들을 반환한다.
+NavigableSet headSet(Object toElement, boolean inclusive)	//지정된 객체보다 작은 값의 객체들을 반환, inclusive가 true면 같은 값의 객체도 반환
+Object higher(Object o)				//지정된 객체보다 큰 값을 가진 객체 중 제일 가까운 값의 객체를 반환, 없으면 null
+boolean isEmpty()				//TreeSet이 비어있는지 확인한다.
+Iterator iterator()				//TreeSet의 Iterator를 반환한다.
+Object last()					//정렬된 순서에서 마지막 객체를 반환한다.
+Object lower(Object o)				//지정된 객체보다 작은 값을 가진 객체 중 가까운 값의 객체를 반환, 없으면 null
+Object pollFirst()				//TreeSet의 첫번째 요소(제일 작은 값의 객체)를 반환
+Object pollLast()				//TreeSet의 마지막 번째 요소(제일 큰 값의 객체)를 반환
+boolean remove(Object o)			//지정된 객체를 삭제한다.
+boolean retainAll(Collection c)			//주어진 컬렉션과 공통된 요소만을 남기고 삭제(교집합)
+int size()					//저장된 객체의 개수를 반환한다
+Spliterator spliterator()			//TreeSet의 spliterator를 반환
+SortedSet subSet(Object fromElement, Object toElement)	//범위검색의 결과를 반환
+NavigableSet<E> subSet(E fromElement, boolean fromInclusive, E toElement, boolean toInclusive)
+//범위 검색(fromElement~toElement)의 결과를 반환한다. (fromInclusive가 true면 시작값이 포함이고, toInclusive가 true면 끝값이 포함이다.
+SortedSet tailSet(Object fromElement)		//지정된 객체보다 큰 값의 객체들을 반환한다.
+Object[] toArray()				//저장된 객체를 객체배열로 반환한다
+Object[] toArray(Object[] a)			//저장된 객체를 주어진 객체배열에 저장하여 반환한다.
+```
+```java
+public class TreeSetLotto {
+
+	public static void main(String[] args) {
+		Set set = new TreeSet();
+		
+		for(int i = 0 ; set.size()<6; i++) {
+			int num = (int)(Math.random()*45)+1;
+			set.add(num);
+		}
+		System.out.println(set); 		//[7, 8, 27, 33, 34, 39]
+	}
+}
+```
+정렬하는 코드가 없는데, TreeSet은 저장할 때 이미 정렬하기 때문에 읽어올 때 따로 정렬할 필요가 없다.
+```java
+public class TreeSetEx1 {
+
+	public static void main(String[] args) {
+		TreeSet set = new TreeSet();
+		
+		String from = "b";
+		String to = "d";
+		
+		set.add("abc"); set.add("alien"); set.add("bat");
+		set.add("car"); set.add("Car"); set.add("disc");
+		set.add("dance"); set.add("dZZZZ"); set.add("dzzzz");
+		set.add("elephant"); set.add("elevator"); set.add("fan");
+		set.add("flower");
+		
+		System.out.println(set);	//[Car, abc, alien, bat, car, dZZZZ, dance, disc, dzzzz, elephant, elevator, fan, flower]
+		System.out.println(set.subSet(from, to));	//[bat, car]
+		System.out.println(set.subSet(from, to + "zzz"));	//[bat, car, dZZZZ, dance, disc]
+	}
+}
+```
+subSet()을 이용해서 범위검색할 때 시작범위는 포함되지만 끝 범위는 포함되지 않는다.    
+만일 끝 범위인 d로 시작하는 단어까지 포함시키고자 한다면, 끝 범위에 "zzz"를 붙이면 된다.     
+d로 시작하는 단어 중 dzzz보다 뒤에 있는 단어를 없을 것이기 때문이다.     
+대소문자를 구분하므로 가능하면 통일하는 것이 좋다.    
+반드시 대소문자가 섞여 있어야 하거나 다른 방식으로 정렬해야하는 경우 Comparator를 이용하면 된다.
+```java
+public class AsciiPrint {
+
+	public static void main(String[] args) {
+		char ch = ' ';
+		
+		for(int i = 0; i<95; i++) {
+			System.out.print(ch++);
+			//공백 이후의 문자들을 출력한다.
+			// !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~
+		}
+	}
+}
+```
+ 출력된 실행결과의 첫 번째 문자는 공백문자이다.
+ ```java
+ public class TreeSetEx2 {
+
+	public static void main(String[] args) {
+		TreeSet set = new TreeSet();
+		int[] score = {80, 95, 50, 35, 45, 65, 10, 100};
+		
+		for(int i = 0; i<score.length; i++)
+			set.add(score[i]);
+		
+		System.out.println(set.headSet(new Integer(50)));		//50보다 작은 값[10, 35, 45]
+		System.out.println(set.tailSet(new Integer(50)));		//50보다 큰 값[50, 65, 80, 95, 100]
+	}
+}
+```
