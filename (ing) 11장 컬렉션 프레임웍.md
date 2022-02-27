@@ -2016,3 +2016,243 @@ public class TreeMapEx1 {
 TreeMap을 사용했기 때문에 키가 오름차순으로 정렬되어 있다.    
 키가 String인스턴스이기 때문에 String클래스에 정의된 정렬기준에 의해서 정렬된 것이다.    
 그리고 Comparator를 구현한 클래스와 Collections.sort(List list, Comparator c)를 이용해서 값에 대한 내림차순으로 정렬하는 방법을 보여준다.
+
+## Properties
+Properties는 HashMap의 구버전인 Hashtable을 상속받아 구현한 것으로,     
+Hashtable은 키와 값을 (Object, Object)의 형태로 저장하는데 비해 Properties는 (String, String)의 형태로 저장하는 보다 단순화된 컬렉션클래스다.     
+주로 애플리케이션의 환경설정과 관련된 속성property을 저장하는데 사용되며 데이터를 파일로부터 읽고 쓰는 편리한 기능을 제공한다.
+```java
+Properties()					//Properties객체를 생성한다.
+Properties(Properties defaults)			//지정된 Properties에 저장된 목록을 가진 Properties객체를 생성한다.
+String getProperty(String key)			//지정된 키key의 값value을 반환한다.
+String getProperty(String key, String defaultValue)	//지정된 키key의 값value를 반환한다. 키를 못찾으면 defaultValue를 반환한다.
+void list(PrintStream out)			//지정된 PrintStream에 저장된 목록을 출력한다.
+void list(PrintWriter out)			//지정된 PrintWriter에 저장된 목록을 출력한다.
+void load(InputStream inStream)			//지정된 InputStream으로부터 목록을 읽어서 저장한다.
+void load(Reader reader)			//지정된 Reader로부터 목록을 읽어서 저장한다.
+void loadFromXML(InputStream in)	/	/지정된 InputStream으로부터 XML문서를 읽어서 XML문서에 저장된 목록을 읽어다 담는다.load&store
+Enumeration propertyNames()			//목록의 모든 키key가 담긴 Enumeration을 반환한다.
+void save(OutputStream out, String header)	//deprecated되었으므로 store()를 사용하자.
+Object setProperty(String key, String value)	//지정된 키와 값을 저장한다. 이미 존재하는 키key면 새로운 값value로 바뀐다.
+void store(OutputStream out, String comments)	//저장된 목록은 지정된 OutputStream에 출력(저장)한다. comments는 목록에 대한 설명(주석)으로 저장된다.
+void store(Writer writer, String comments)	//저장된 목록을 지정된 Writer에 출력(저장)한다. comments는 목록에 대한 설명(주석)으로 저장된다.
+void storeToXML (OutputStream os, String comment)	
+//저장된 목록을 지정된 출력스트림에 XML문서로 출력(저장)한다. comment는 목록에 대한 설명(주석)으로 저장된다.
+void storeToXML(Outputstream os, String comment, String encoding)	
+//저장된 목록을 지정된 출력스트림에 해당 인코딩의 XML문서로 출력(저장)한다. comment는 목록에 대한 설명(주석)으로 저장된다.
+Set stringPropertyNames()			//Properties에 저장되어 있는 모든 키key를 Set에 담아서 반환한다.
+```
+```java
+public class PropertiesEx1 {
+
+	public static void main(String[] args) {
+		Properties prop = new Properties();
+		
+		//prop에 키와 값(key, value)을 저장한다.
+		prop.setProperty("timeout", "30");
+		prop.setProperty("language", "kr");
+		prop.setProperty("size", "10");
+		prop.setProperty("capacity", "10");
+		
+		//prop에 저장된 요소들을 Enumeration을 이용해서 출력한다.
+		Enumeration e = prop.propertyNames();
+		
+		while(e.hasMoreElements()) {
+			String element = (String)e.nextElement();
+			System.out.println(element + "="+prop.getProperty(element));
+			//capacity=10   size=10   timeout=30   language=kr
+		}
+		prop.setProperty("size", "20");		//size의 값을 20으로 변경한다.
+		System.out.println(prop.getProperty("size"));			//20
+		System.out.println(prop.getProperty("capacity", "20"));		//10
+		System.out.println(prop.getProperty("loadfactor", "0.75"));	//0.75
+		System.out.println(prop);	//prop에 저장된 요소들을 출력한다.	{size=20, language=kr, timeout=30, capacity=10}
+		prop.list(System.out);		//prop에 저장된 요소들을 화면(System.out)에 출력한다.
+		//-- listing properties --
+		//size=20
+		//language=kr
+		//timeout=30
+		//capacity=10
+	}
+}
+```
+데이터를 저장하는데 사용되는 setProperty()는 단순히 Hashtable의 put메서드를 호출할 뿐이다.     
+그리고 setProperty()는 기존에 같은 키로 저장된 값이 있는 경우 그 값을 Object타입으로 반화하며, 그렇지 않으면 null을 반환한다.     
+getProperty()는 Properties에 저장된 값을 읽어오는 일을 하는데, 만일 읽어오려는 키가 존재하지 않으면 defaultValue를 반환한다.     
+Properties는 Hashtable을 상속받아 구현한 것이라 Map의 특성상 저장순서를 유지하지 않기 때문에      
+예제의 결과에 출력된 순서가 저장순서와는 무관하다.      
+Properties는 컬렉션프레임웍 이전의 구버전이므로 Iterator가 아닌 Enumeration을 사용한다.    
+그리고 list메서드를 이용하면 Properties에 저장된 모든 데이터를 화면 또는 파일에 편리하게 출력할 수 있다.
+```java
+public class PropertiesEx2 {
+
+	public static void main(String[] args) {
+		//commandline에서 inputfile을 지정해주지 않으면 프로그램을 종료한다.
+		if(args.length != 1) {
+			System.exit(0);
+		}
+		Properties prop = new Properties();
+		String inputFile = args[0];
+		
+		try {
+			prop.load(new FileInputStream(inputFile));
+		}catch(IOException e) {
+			System.exit(0);
+		}
+		String name = prop.getProperty("name");
+		String[] data = prop.getProperty("data").split(",");
+		int max = 0, min = 0;
+		int sum = 0;
+		
+		for(int i = 0 ; i<data.length; i++) {
+			int intValue = Integer.parseInt(data[i]);
+			
+			if(i == 0) max = min = intValue;
+			
+			if(max<intValue) max = intValue;
+			else if(min>intValue) min = intValue;
+			
+			sum += intValue;
+		}
+		System.out.println(name);
+		System.out.println(max);
+		System.out.println(min);
+		System.out.println(sum);
+		System.out.println((sum*100.0/data.length)/100);
+	}
+}
+
+input.txt
+# 이것은 주석입니다.
+# 여러 줄도 가능하고요.
+name=Han Sanghyuk
+data=9,1,5,2,8,13,26,11,35,1
+```
+외부파일(input.txt)로부터 데이터를 입력받아서 계산결과를 보여주는 예제다.   
+외부파일의 형식은 라인단위로 키와 값이 '='로 연결된 형태이어야 하며 주석라인은 첫 번째 문자가 '#'이어야 한다.    
+정해진 규칙만 지킨다면 load()를 호출하는 것만으로 데이터를 읽어 올 수 있지만, 인코딩문제로 한글이 깨질 수 있으므로 한글을 입력받으려면 코드를 변경해야한다.
+```java
+String name = prop.getProperty("name");
+
+try{
+   name = new String(name.getBytes("8859_1"), "EUC-KR");
+} catch(Exception e) { }
+```
+```java
+public class PropertiesEx3 {
+
+	public static void main(String[] args) {
+		Properties prop = new Properties();
+		
+		prop.setProperty("timeout", "30");
+		prop.setProperty("language", "한글");
+		prop.setProperty("size", "10");
+		prop.setProperty("capacity", "10");
+		
+		try {
+			prop.store(new FileOutputStream("output.txt"), "Properties Example");
+			prop.storeToXML(new FileOutputStream("output.xml"), "Properties Example");
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
+	}
+}
+output.txt
+#Properties Example
+#Sun Feb 27 23:55:19 KST 2022
+size=10
+language=\uD55C\uAE00			//한글이 유니코드로 변경되어있다.
+timeout=30
+capacity=10
+
+output.xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+
+-<properties>
+
+<comment>Properties Example</comment>
+
+<entry key="size">10</entry>
+
+<entry key="language">한글</entry>		//한글이 그대로 저장되어있다.
+
+<entry key="timeout">30</entry>
+
+<entry key="capacity">10</entry>
+
+</properties>
+```
+여기서도 한글문제가 발생하는데 storeToXML()로 저장한 XML은 Editplus나 Eclipse에서 한글편집이 가능하므로    
+데이터에 한글이 포함된 경우 store()보다 storeToXML()을 이용해서 XML로 저장하는 것이 좋다.
+```java
+package practice;
+import java.util.*;
+import java.io.*;
+public class PropertiesEx4 {
+
+	public static void main(String[] args) {
+		Properties sysProp = System.getProperties();
+		System.out.println(sysProp.getProperty("java.version"));
+		System.out.println(sysProp.getProperty("user.language"));
+		sysProp.list(System.out);
+	}
+}
+/*17.0.1
+ko
+-- listing properties --
+java.specification.version=17
+sun.cpu.isalist=amd64
+sun.jnu.encoding=MS949
+java.class.path=C:\Users\kojie\Downloads\class\github...
+java.vm.vendor=Oracle Corporation
+sun.arch.data.model=64
+user.variant=
+java.vendor.url=https://java.oracle.com/
+java.vm.specification.version=17
+os.name=Windows 10
+sun.java.launcher=SUN_STANDARD
+user.country=KR
+sun.boot.library.path=C:\Program Files\Java\jdk-17.0.1\bin
+sun.java.command=practice.PropertiesEx4
+jdk.debug=release
+sun.cpu.endian=little
+user.home=C:\Users\kojie
+user.language=ko
+java.specification.vendor=Oracle Corporation
+java.version.date=2021-10-19
+java.home=C:\Program Files\Java\jdk-17.0.1
+file.separator=\
+java.vm.compressedOopsMode=32-bit
+line.separator=
+
+java.vm.specification.vendor=Oracle Corporation
+java.specification.name=Java Platform API Specification
+user.script=
+sun.management.compiler=HotSpot 64-Bit Tiered Compilers
+java.runtime.version=17.0.1+12-LTS-39
+user.name=kojie
+path.separator=;
+os.version=10.0
+java.runtime.name=Java(TM) SE Runtime Environment
+file.encoding=UTF-8
+java.vm.name=Java HotSpot(TM) 64-Bit Server VM
+java.vendor.url.bug=https://bugreport.java.com/bugreport/
+java.io.tmpdir=C:\Users\kojie\AppData\Local\Temp\
+java.version=17.0.1
+user.dir=C:\Users\kojie\Downloads\class\github...
+os.arch=amd64
+java.vm.specification.name=Java Virtual Machine Specification
+sun.os.patch.level=
+native.encoding=MS949
+java.library.path=C:\Program Files\Java\jdk-17.0.1\bin;...
+java.vm.info=mixed mode, sharing
+java.vendor=Oracle Corporation
+java.vm.version=17.0.1+12-LTS-39
+sun.io.unicode.encoding=UnicodeLittle
+java.class.version=61.0
+ */
+ ```
+ 시스템 속성을 가져오는 방법을 보여주는 예제이다.    
+ System클래스의 getProperties()를 호출하면 시스템과 관련된 속성이 저장된 Properties를 가져올 수 있다.
