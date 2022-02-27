@@ -1898,3 +1898,121 @@ ex) 주민등록번호 맨 앞자리 로 구분하여 10개의 서랍(배열)에
 1. 검색하고자 하는 값의 키로 해시함수를 호출한다.
 2. 해시함수의 계산결과(해시코드)로 해당 값이 저장되어 있는 링크드 리스트를 찾는다.
 3. 링크드 리스트에서 검색한 키와 일치하는 데이터를 찾는다.
+
+## TreeMap
+TreeMap은 이진검색트리의 형태로 키와 값의 쌍으로 이루어진 데이터를 저장하여 검색과 정렬에 적합한 컬렉션 클래스다.     
+검색의 경우 HashMap이 TreeMap보다 더 뛰어나지만 범위검색이나 정렬이 필요한 경우는 TreeMap이 더 뛰어나다.
+```java
+TreeMap()					//TreeMap객체를 생성
+TreeMap(Comparator c)				//지정된 Comparator를 기준으로 정렬하는 TreeMap객체를 생성
+TreeMap(Map m)					//주어진 Map에 저장된 모든 요소를 포함하는 TreeMap생성
+TreeMap(SortedMap m)				//주어진 SortedMap에 저장된 모든 요소를 포함하는 TreeMap생성
+Map.Entry ceilingEntry(Object key)		//지정된 key와 일치하거나 큰 것중에 제일 작은 것의 키와 값의 쌍Map.Entr를 반환, 없으면 null 
+Object ceilingKey(Object key)			//지정된 key와 일치하거나 큰 것중 제일 작은것의 키를 반환, 없으면 null
+void clear()					//TreeMap에 저장된 모든 객체를 제거
+Object clone()					//현재 TreeMap을 복제해서 반환
+Comparator comparator()				//TreeMap의 정렬기준이 되는 Comparator를 반환, Comparator가 지정되지 않았다면 null
+boolean containsKey(Object key)			//TreeMap에 지정된 키key가 포함되어있는지 알려줌
+boolean containsValue(Object value)		//TreeMap에 지정된 값value가 포함되어있는지 알려줌
+NavigableSett descendingKeySet()		//TreeMap에 저장된 키를 역수으로 정렬해서 NavigableSet에 담아서 반환
+Set entrySet()					//TreeMap에 저장된 키와 값을 엔트리(키와 값의 결합)의 형태로 Set에 저장해서 반환
+Map.Entry firstEntry()				//TreeMap에 저장된 첫번째(가장 작은)키와 값의 쌍(Map.Entry)을 반환
+Object firstKey()				//TreeMap에 저장된첫번째(가장 작은)키를 반환
+Map.Entry floorEntry(Object key)		//지정된 key와 일치하거나 작은 것 중에서 제일 큰 키의 쌍(Map.Entry)을 반환, 없으면 null
+Object flloorKey(Object key)			//지정된 key와 일치하거나 작은 것 중에서 제일 큰 키를 반환, 없으면 null
+Object get(Object key)				//지정된 키key의 값(객체)을 반환
+SortedMap headMap(Object toKey)			//TreeMap에 저장된 첫번째 요소부터 지정된 범위에 속한 모든 요소가 담긴 SortedMap을 반환(toKey 미포함)
+NavigableMap headMap(Object toKey, boolean inclusive)
+//TreeMap에 저장된 첫번째 요소부터 지정된 범위에 속한 모든 요소가 담긴 SortedMap을 반환, inclusive의 값이 true면 toKey 포함
+Map.Entry higherEntry(Object key)		//지정된 key보다 큰 키 중에 제일 작은 키의 쌍Map.Entry을 반환, 없으면 null
+Object higherKey(Object key)			//지정된 key보다 큰 키 중에 제일 작은 키의 쌍Map.Entry을 반환, 없으면 null
+boolean isEmpty()				//TreeMap이 비어있는지 알려준다.
+Set keySet()					//TreeMap에 저장된 모든 키가 저장된 Set을 반환
+Map.Entry lowerEntry(Object key)		//지정된 key보다 작은 키중에 제일 큰 키의 쌍Map.Entry을 반환, 없으면 null
+Object lowerKey(Object key)			//지정된 key보다 작은 키중에 제일 큰 키의 쌍Map.Entry을 반환, 없으면 null
+NavigableSet navigableKeySet()			//TreeMap의 모든 키가 담긴 NavigableSet을 반환
+Map.Entry pollFirstEntry()			//TreeMap에서 제일 작은 키를 제거하면서 반환
+Map.Entry pollLastEntry()			//TreeMap에서 제일 큰 키를 제거하면서 반환
+Obejct put(Object key, Object value)		//지정된 키와 값을 TreeMap에 저장
+void putAll(Map map)				//Map에 저장된 모든 요소를 TreeMap에 저장
+Object remove(Object key)			//TreeMap에서 지정된 키로 저장된 값(객체)을 제거
+Object replace(Object k, Object v)		//기존의 키k의 값을 지정된 값v로 변경
+boolean replace(Object key, Object oldValue, Ovject newValue)
+//기존의 키k의 값을 새로운 값newValue로 변경, 단 기존의 값과 지정된 값oldValue가 일치해야함
+
+int size()					//TreeMap에 저장된요소의 개수를 반환
+NavigableMap subMap(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive)
+//지정된 두개의 키 사이에 있는 모든 요소들이 담긴 NavigableMap을 반환, fromInclusive가 true면 범위에 fromKey포함, toInclusive가 true면 범위에 toKey포함
+SortedMap subMap(Object fromKey, Object toKey)	//지정된 두개의 키 사이에 있는 모든 요소들이 담긴 SortedMap을 반환
+SortedMap tailMap(Object fromKey)		//지정된 키부터 마지막 요소의 범위에 속한 요소가 담긴 SortedMap을 반환
+NavigableMap tailMap(Object fromKey, boolean inclusive)	
+//지정된 키부터 마지막 요소의 범위에 속한 요소가 담긴 NavigableMap을 반환, inclusive가 true면 fromKey포함
+Collection values()				//TreeMap에 저장된 모든 값을 컬렉션의 형태로 반환
+```
+TreeMap의 생성자와 메서드
+```java
+public class TreeMapEx1 {
+
+	public static void main(String[] args) {
+		String[] data = {"A","K","A","K","D","K","A","K","K","K","Z","D"};
+		
+		TreeMap map = new TreeMap();
+		
+		for(int i = 0; i<data.length; i++) {
+			if(map.containsKey(data[i])) {
+				Integer value = (Integer)map.get(data[i]);
+				map.put(data[i], new Integer(value.intValue()+1));
+			} else
+				map.put(data[i], new Integer(1));
+		}
+		Iterator it = map.entrySet().iterator();
+		//기본정렬
+		while(it.hasNext()) {
+			Map.Entry entry = (Map.Entry)it.next();
+			int value = ((Integer)entry.getValue()).intValue();
+			System.out.println(entry.getKey() + ":"+printBar('#', value)+ " " + value);
+			//A:### 3  D:## 2  K:###### 6  Z:# 1
+		}
+		//map을 ArrayList로 변환한 다음에 Collections.sort()로 정렬
+		Set set = map.entrySet();
+		List list = new ArrayList(set);	//ArrayList(Collection c)
+		
+		//static void sort(List list, Comparator c)
+		Collections.sort(list, new ValueComparator());
+		
+		it = list.iterator();
+		//값의 크기가 큰 순서대로 정렬
+		while(it.hasNext()) {
+			Map.Entry entry = (Map.Entry)it.next();
+			int value = ((Integer)entry.getValue()).intValue();
+			System.out.println(entry.getKey() + ":"+printBar('#', value)+ " " + value);
+			//K:###### 6  A:### 3  D:## 2  Z:# 1
+		}
+	}
+	static class ValueComparator implements Comparator{
+		public int compare(Object o1, Object o2) {
+			if(o1 instanceof Map.Entry && o2 instanceof Map.Entry) {
+				Map.Entry e1 = (Map.Entry)o1;
+				Map.Entry e2 = (Map.Entry)o2;
+				
+				int v1 = ((Integer)e1.getValue()).intValue();
+				int v2 = ((Integer)e2.getValue()).intValue();
+				
+				return v2 - v1;
+			}
+			return -1;
+		}
+	}
+	public static String printBar(char ch, int value) {
+		char[] bar = new char[value];
+		
+		for(int i = 0 ; i<bar.length; i++)
+			bar[i] = ch;
+		
+		return new String(bar);
+	}
+}
+```
+TreeMap을 사용했기 때문에 키가 오름차순으로 정렬되어 있다.    
+키가 String인스턴스이기 때문에 String클래스에 정의된 정렬기준에 의해서 정렬된 것이다.    
+그리고 Comparator를 구현한 클래스와 Collections.sort(List list, Comparator c)를 이용해서 값에 대한 내림차순으로 정렬하는 방법을 보여준다.
