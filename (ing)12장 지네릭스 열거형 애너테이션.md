@@ -159,7 +159,8 @@ class Box<T>{
 	public String toString() { return list.toString();}
 }
 ```
-	## 제한된 지네릭 클래스
+## 제한된 지네릭 클래스
+
 지네릭 타입에 extends를 사용하면, 특정 타입의 자손들만 대입할 수 있게 제한할 수 있다.
 ```java
 	class FruitBox<T extends Fruit> {					//Fruit의 자손만 타입으로 지정가능
