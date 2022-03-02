@@ -80,10 +80,11 @@ static멤버는 타입 변수에 지정된 타입, 즉 대입된 타입의 종�
 ```
 지네릭 배열을 생성할 수 없는 것은 new 연산자 때문인데, 이 연산자는 컴파일 시점에 타입 T가 뭔지 정확히 알아야 한다.    
 그런데 위의 코드에 정의된 Box<T>클래스를 컴파일하는 시점에서는 T가 어떤 타입이 될지 전혀 알 수 없다.    
-	instanceof연산자도 new연산자와 같은 이유로 T를 피연산자로 사용할 수 없다.      
-	## 지네릭 클래스의 객체 생성과 사용
-	
-	```java
+	instanceof연산자도 new연산자와 같은 이유로 T를 피연산자로 사용할 수 없다.       
+
+# 지네릭 클래스의 객체 생성과 사용
+
+```java
 	class Box<T>	{
 		ArrayList<T> list = new ArrayList<T>();
 	
@@ -120,9 +121,9 @@ static멤버는 타입 변수에 지정된 타입, 즉 대입된 타입의 종�
 	Box<Fruit> fruitBox = new Box<Fruit>();
 	fruitBox.add(new Fruit());
 	fruitBox.add(new Applew());
-	```
+```
 	
-	```java
+```java
 	class Fruit 			  {public String toString() { return "Fruit";}}
 class Apple extends Fruit {public String toString() { return "Apple";}}
 class Grape extends Fruit {public String toString() { return "Grape";}}
@@ -157,6 +158,113 @@ class Box<T>{
 	int size()		 { return list.size();}
 	public String toString() { return list.toString();}
 }
-	```
+```
 	## 제한된 지네릭 클래스
+지네릭 타입에 extends를 사용하면, 특정 타입의 자손들만 대입할 수 있게 제한할 수 있다.
+```java
+	class FruitBox<T extends Fruit> {					//Fruit의 자손만 타입으로 지정가능
+		ArrayList<T> list = new ArrayList<T>();
+		...
+	}
 	
+	FruitBox<Apple> appleBox = new FruitBox<Apple>();
+	FruitBox<Toy>	toyBox = new FruitBox<Toy>();				//에러. Toy는 Fruit의 자손이 아님
+	
+	//add()의 매개변수의 타입 T도 Fruit과 그 자손 타입이 될 수 있으므로, 여러 과일을 담을 수 있는 상자가 가능하게 된다.
+FruitBox<Fruit> fruitBox = new FruitBox<Fruit>();
+	fruitBox.add(new Apple());	//Apple이 Fruit의 자손
+	fruitBox.add(new Grape());	//Grape가 Fruit의 자손
+	//타입 매개변수 T에 Object를 대입하면 모든 종류의 객체를 저장할 수 있게 된다.
+	```
+	```java
+	//만일 클래스가 아니라 인터페이스를 구현해야 한다는 제약이 필요하면,
+	//implement가 아니라 extends를 사용한다.
+	interface Eatable {}
+	class FruitBox<T extends Eatable> {...}
+	//클래스 Fruit의 자손이면서 Eatable 인터페이스도 구현해야한다면 & 기호로 연결한다.
+	class FruitBox<T extends Fruit & Eatable> {...}
+	//FruitBox에는 Fruit의 자손이면서 Eatable을 구현한 클래스만 타입 매개변수 T에 대입될 수 있다.
+```
+```java
+	class Fruit1 implements Eatable {
+	public String toString() {return "Fruit";}
+}
+class Apple1 extends Fruit1 {public String toString() { return "Apple";}}
+class Grape1 extends Fruit1 {public String toString() { return "Grape";}}
+class Toy1				   {public String toString() { return "Toy";}}
+
+interface Eatable{}
+
+public class FruitBoxEx2 {
+
+	public static void main(String[] args) {
+		FruitBox1<Fruit1> fruitBox = new FruitBox1<Fruit1>();
+		FruitBox1<Apple1> appleBox = new FruitBox1<Apple1>();
+		FruitBox1<Grape1> grapeBox = new FruitBox1<Grape1>();
+//		FruitBox1<Grape1> grapeBox = new FruitBox1<Apple1>();	//에러, 타입 불일치
+//		FruitBox1<Toy1>	  toyBox   = new FruitBox1<Toy1>();		//에러
+
+		fruitBox.add(new Fruit1());
+		fruitBox.add(new Apple1());
+		fruitBox.add(new Grape1());
+		appleBox.add(new Apple1());
+//		appleBox.add(new Grape1());			//에러, Grape는 Apple의 자손이 아님
+		grapeBox.add(new Grape1());
+		
+		System.out.println(fruitBox);		//[Fruit, Apple, Grape]
+		System.out.println(appleBox);		//[Apple]
+		System.out.println(grapeBox);		//[Grape]
+	}
+}
+class FruitBox1<T extends Fruit1 & Eatable> extends Box1<T>{}
+class Box1<T>{
+	ArrayList<T> list = new ArrayList<T>();
+	void add(T item)	{list.add(item);	}
+	T get(int i)		{return list.get(i);}
+	int size()			{return list.size();}
+	public String toString() {return list.toString();}
+}
+```
+	## 와일드 카드
+```java
+	class Juicer {
+		static Juice makeJuice(FruitBox<Fruit> box) {			//<Fruit>으로 지정
+			String tmp = " ";
+			for(Fruit f : box.getList())	tmp += f + " ";
+			return new Juice(tmp);
+		}
+	}
+	//Juice클래스는 지네릭 클래스가 아닌데다, 지네릭 클래스라고 해도 static메서드에는 타입 매개변수 T를 매개변수에 사용할 수 없으므로
+	//아예 지네릭스를 적용하지 않던가, 위와 같이 타입 매개변수 대신, 특정 타입을 지정해줘야 한다.
+
+	FruitBox<Fruit> fruitBox = new FruitBox<Fruit>();
+	FruitBox<Apple> appleBox = new appleBox<Apple>();
+	...
+	System.out.println(Juicer.makeJuice(fruitBox));		//FruitBox<Fruit>
+	System.out.println(Juicer.makeJuice(appleBox));		//에러, FruitBox<Apple>
+	// 지네릭 타입을 FruitBox<Fruit>로 고정해 놓으면, FruitBox<Apple>타입의 객체 makeJuice()의 매개변수가 될 수 없으므로,
+	// 다음과 같이 여러가지 타입의 매개변수를 갖는 makeJuice()를 만들 수 밖에 없다.
+	
+ static Juice makeJuice (FruitBox<Fruit> box) {
+		String tmp = " ";
+		for(Fruit f : box.getList()) tmp += f + " ";
+	  return new Juice(tmp);
+	}
+	
+	static Juice makeJuice(FruitBox<Apple> box) {
+		String tmp = " ";
+		for(Fruit f : box.getList()) tmp += f + " ";
+		return new Juice(tmp);
+	}
+	
+	//그러나 위와 같이 오버로딩하면, 컴파일 에러가 발생한다. 지네릭 타입이 다른 것만으로는 오버로딩이 성립하지 않기 때문이다.
+	//지네릭 타입은 컴파일러가 컴파일할 때만 사용하고 제거해버린다. 그래서 위의 두 메서드는 오버로딩이 아니라
+	//메서드 중복 정의 이다.
+```
+	
+이럴때 사용하기 위해 고안된 것이 와일드 카드이다.      
+와일드 카드는 기호 '?'로 표현하는데, 와일드 카드는 어떠한 타입도 될 수 있다.      
+	'?'만으로는 Object타입과 다를 게 없으므로, extends와 super로 상한과 하한을 제한할 수 있다.
+	> <? extends T> 와일드 카드의 상한 제한. T와 그 자손들만 가능.      
+  > <? super T> 와일드 카드의 하한 제한. T와 그 조상들만 가능.     
+	> <?> 제한 없음. 모든 타입이 가능. <? extends Object>와 동일.
