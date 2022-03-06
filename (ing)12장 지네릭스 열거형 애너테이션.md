@@ -20,8 +20,8 @@ class Box<T>{		//지네릭 타입 T를 선언
 	T getItem() { return item; }
 }
 ```
-> 클래스 이름 옆에 <T>를 붙이고 Object를 모두 T로 바꿧다.
- Box<T>에서 T를 타입변수type variable이라고 하며, Type의 첫 글자에서 따온 것이다.      
+> 클래스 이름 옆에 < T >를 붙이고 Object를 모두 T로 바꿧다.
+ Box< T >에서 T를 타입변수type variable이라고 하며, Type의 첫 글자에서 따온 것이다.      
  타입 변수는 다른 것을 사용해도 되며, ArrayList<E>는 요소Element에서 E를 따왓다.    
  타입 변수가 여러 개인 경우 Map<K, V>와 같이 컴마,를 구분자로 나열하면 된다.     
  
@@ -40,16 +40,16 @@ class Box{
 지네릭 클래스가 된 Box클래스의 객체를 생성할 때는 다음과 같이 참조변수와 생성자에 타입T대신 사용될 실제 타입을 지정해주어야 한다.   
 
 #### 지네릭스 용어
-* class Box<T> { }
-> Box<T> 지네릭 클래스. 'T의 Box' 또는 'T Box'라고 읽는다.     
+* class Box< T > { }
+> Box< T > 지네릭 클래스. 'T의 Box' 또는 'T Box'라고 읽는다.     
 > T 타입 변수 또는 타입 매개변수.(T는 타입문자)      
 > Box 원시타입(raw type)
-* Box<String> b = new Box<String>();
+* Box< String > b = new Box< String >();
 > 매개변수에 타입을 지정하는 것을 지네릭 타입 호출 이라고 한다.     
 > 지정된 타입String을 매개변수화된 타입 이라고 한다.     
 
 	
-Box<String>과 Box<Integer>는 지네릭 클래스 Box<T>에 서로 다른 타입을 대입하여 호출한 것일 뿐,     
+Box< String >과 Box< Integer >는 지네릭 클래스 Box< T >에 서로 다른 타입을 대입하여 호출한 것일 뿐,     
 이 둘이 별개의 클래스를 의미하는 것은 아니다. add(3,5)와 add(2,4)가 같은 메서드를 호출하는 것과 같은 것이다.			
 
 #### 지네릭스의 제한
