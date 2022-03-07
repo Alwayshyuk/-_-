@@ -493,3 +493,228 @@ Collections.sort(appleBox.getList(), new FruitBox());
 Collections.sort(grapeBox.getList(), new FruitBox());
 ```
 이러한 장점 때문에 Comparator에는 항상 < ? super T >가 습관적으로 따라 붙는다.
+
+## 지네릭 메서드
+
+메서드의 선언부에 지네릭 타입이 선언된 메서드를 지네릭 메서드라 한다.     
+앞에서 본 Collections.sort()가  지네릭 메서드이며, 지네릭 타입의 선언 위치는 반환타입 바로 앞이다.
+
+```java
+static <T> void sort (List<T> list, Comparator<? super T> c)
+```
+
+지네릭 클래스에 정의된 타입 매개변수와 지네릭 메서드에 정의된 타입 매개변수는 전혀 별개의 것이다.     
+같은 타입 문자 T를 사용해도 같은 것이 아니다. 지네릭 메서드는 지네릭 클래스가 아닌 클래스에도 정의될 수 있다.
+
+```java
+class FruitBox<T> {
+	...
+	static <T> void sort(Luist<T> list, Comparator<? super T> c) {
+		... }	}
+```
+
+위의 코드에서 지네릭 클래스 FruitBox에 선언된 타입 매개변수 T와 지네릭 메서드 sort()에 선언된 타입 매개변수 T는     
+타입 문자만 같을 뿐 서로 다른 것이다.    
+static멤버에는 타입 매개변수를 사용할 수 없지만, 이처럼 메서드에 지네릭 타입을 선언하고 사용하는 것은 가능하다.      
+메서드에 선언된 지네릭 타입은 지역 변수를 선언한 것과 같다고 생각하면 이해가 쉽다.     
+이 타입 매개변수는 메서드 내에서만 사용될 것이기 때문에 메서드가 static이건 아니던 상관없다.     
+같은 이유로 내부 클래스에 선ㄴ언된 타입 문자가 외부 클래스의 타입 문자와 같아도 구별될 수 있다.       
+
+앞서 나왔던 makeJuice()를 지네릭 메서드로 바꾸면 다음과 같다.
+
+```java
+static Juice makeJuice(FruitBox<? extends Fruit> box) {
+	String tmp = "";
+	for(Fruit f : box.getList()) tmp += f + " ";
+	return new Juice(tmp);		}
+	//>>>>>>
+static <T extends Fruit> Juice makeJuice(FruitBox<T> box) {
+	String tmp = "";
+	for(Fruit f : box.getList())	tmp += f + " ";
+return new Juice(tmp);			}
+
+//이제 이 메서드를 호출할 때 다음과 같이 타입 변수에 타입을 대입해야 한다.
+FruitBox<Fruit> fruitBox = new FruitBox<Fruit>();
+FruitBox<Apple> appleBox = new FruitBox<apple>();
+
+System.out.println(Juicer.<Fruit>makeJuice(fruitBox));
+System.out.println(Juicer.<Apple>makeJuice(appleBox));
+
+//그러나 대부분의 경우 컴파일러가 타입을 추정할 수 있기 때문에 생략해도 된다.
+//위 코드에서 fruitBox와 appleBox의 선언부에서 컴파일러가 대입된 타입을 추정할 수 있으므로 생략할 수 있다.
+System.out.println(Juicer.makeJuice(fruitBox));		//대입된 타입을 생략할 수 있다.
+System.out.println(Juicer.makeJuice(appleBox));
+
+//한 가지 주의할 점은 지네릭 메서드를 호출할 때, 대입된 타입을 생략할 수 없는 경우에는 참조변수나 클래스 이름을 생략할 수 없다는 것이다.
+System.out.println(<Fruit>makeJuice(fruitBox));		//에러. 클래스 이름 생략 불가
+System.out.println(this.<Fruit>makeJuice(fruitBox));
+System.out.println(Juicer.<Fruit>makeJuice(fruitBox));
+//같은 클래스 내에 있는 멤버들끼리는 참조변수나 클래스 이름, 즉 this나 클래스 이름을 생략하고 메서드 이름만으로 호출이 가능하지만
+//대입된 타입이 있을 때는 반드시 써줘야 한다.
+```
+
+지네릭 메서드는 매개변수의 타입이 복잡할 때도 유용하다.     
+만일 아래와 같은 코드가 있다면 타입을 별도로 선언함으로써 코드를 간략히 할 수 있다.
+
+```java
+public static void printAll(ArrayList<? extends Product> list, ArrayList<? extends Product> list2) {
+	for(Unit u : list)
+		System.out.println(u);		}
+		//>>>>>>>>>>>>>
+public static <T extends Product> void printAll(ArrayList<T> list, ArrayList<T> list2) {
+	for(Unit u : list)
+		System.out.println(u);		}		
+```
+
+아래의 메서드는 Collections클래스의 sort()인데, 위에서 설명한 sort()와 달리 매개변수가 하나이다.
+
+```java
+public static <T extends Comparable<? super T>> void sort ( List<T>)
+//매개변수로 지정한 List<T>를 정렬한다는 것은 알겠는데, 메서드에 선언된 지네릭 타입이 복잡하다. 와일드 카드를 벗겨낸다.
+public static <T extends Comparable<T> void sort(List<T>)
+//List<T>의 요소가 Comparable 인터페이스를 구현한 것이어야 한다는 뜻이다.
+//앞서 살펴본 것처럼 인터페이스라고 해서 implements를 쓰지 않는다.
+
+//List<T>: 타입 T를 요소로 하는 List를 매개변수로 허용한다.
+//<T extends Comparable<? super T>>: 'T'는 Comparable을 구현한 클래스이어야 하며
+//(<T extends Comparable>), 'T' 또는 그 조상의 타입을 비교하는 Comparable이어야 한다는 것(Comparable<? super T>)을 의미한다.
+//만일 T가 Student이고, Person의 자손이라면, <? super T>는 Student, Person, Object가 모두 가능하다.
+```
+
+## 지네릭 타입의 형변환
+
+```java
+Box box = null;
+Box<Object> objBox = null;
+
+box = (Box)objBox;		//지네릭 타입 -> 원시 타입, 가능하나 경고 발생
+objBox = (Box<Object>)box;	//원시 타입 -> 지네릭 타입, 가능하나 경고 발생
+```
+지네릭 타입과 넌지네릭 타입간의 형변환은 항상 가능하나 경고가 발생한다.
+
+```java
+Box<Object> objBox = null;
+Box<String> strBox = null;
+
+objBox = (Box<Object>)strBox;		//에러. Box<String> -> Box<Object>
+strBox = (Box<String>)objBox;		//에러. Box<Object> -> Box<String>
+```
+대입된 타입이 Object일지라도 불가능하다. 
+
+```java
+Box<? extends Object> wBox = new Box<String>();	//형변환이 된다.
+//그래서 앞서 배운 makeJuice메서드의 매개변수에 다형성이 적용될 수 있었던 것이다.
+
+static  Juice makeJuice(FruitBox<? extends Fruit> box)	{...}
+
+FruitBox <? extends Fruit> box = new FruitBox<Fruit>();
+FruitBox <? extends Fruit> box = new FruitBox<Apple>();
+FruitBox <? extends Fruit> box = new FruitBox<Grape>();
+
+// 반대로의 형변환도 성립하지만 확인되지 않은 형변환이라는 경고가 발생한다.
+//FruitBox<? extends Fruit>에 대입될 수 있는 타입이 여러 개인데다,
+//FruitBox<Apple>을 제외한 다른 타입은 FruitBox<Apple>로 형변환될 수 없기 때문이다.
+FruitBox<? extends Fruit> box = null;
+FruitBox<Apple> appleBox = (FruitBox<Apple>)box;		//가능하나 미확인 타입으로 형변환 경고
+```
+
+
+
+다음은 java.util.Optional클래스의 실제 소스의 일부이다.
+
+```java
+public final class Optional <T> {
+	private static final Optional<?> EMPTY = new Optional<>();
+	private final T value;
+		...
+	public static<T> Optional<T> empty() {
+		Optional<T> t = (<Optional<T>) EMPTY;
+		return t;	}	...	}
+```
+static상수 EMPTY에 비어있는 Optional객체를 생성해서 저장했다가 empty()를 호출하면 EMPTY를 형변환해서 반환한다.       
+상수를 선언하는 문장을 단계별로 분석하면 다음과 같다.
+
+```java
+Optional<?> EMPTY = new Optional<>();
+Optional<? extends Object> EMPTY = new Optional<>();
+Optional<? extends Object> EMPTY = new Optional<Object>();
+//<?>는 <? extends Object>를 줄여 쓴 것이며, <>안에 생략된 타입은 Object이다.
+
+Optional<?> EMPTY = new Optional<?>();		//에러. 미확인 타입의 객체는 생성 불가.
+Optional<?> EMPTY = new Optional<Object>();	//가능
+Optional<?> EMPTY = new Optional<>();		//위 문장과 동일
+//class Box<T extends Fruit>의 경우 Box<?> b = new Box<>;는 Box<?> b = new Box<Fruit>;이다.
+
+//위 문장에서 EMPTY의 타입을 Optional<Object>가 아닌 Optional<?>로 한 이유는 Optional<T>로 형변환이 가능하기 때문이다.
+Optional<?> wopt = new Optional<Object>();
+Optional<Object> oopt = new Optional<Object>();
+
+Optional<String> sopt = (Optional<String>)wopt;	//가능. 형변환 가능
+Optional<String> sopt = (Optaonal<String>)oopt;	//에러. 형변환 불가능
+
+//empty의 타입이 Optional<T>이므로 EMPTY를 Optional<T>로 형변환해야 하는데,
+//위의 코드에서 알 수 있는 것처럼 Optional<Object>는 Optional<T>로 형변환이 불가능하다.
+
+public static<T> Optional<T> empty() {
+	Optional<T> t = (Optional<T>) EMPTY;	//Optional<?> -> Optional<T>
+	return t;			}
+
+//정리하면, Optional<Object>를 Optional<String>으로 직접 형변환하는 것은 불가능하지만,
+//와일드 카드가 포함된 지네릭 타입으로 형변환하면 가능하다. 대신 확인되지 않은 타입으로의 형변환이라는 경고가 발생한다.
+Optional<Object> -> Object<T>		//형변환 불가능.
+Optional<Object> -> Object<?> -> Object<T>		//형변환 가능. 경고 발생
+
+//마지막으로 와일드 카드가 사용된 지네릭 타입끼리도 다음과 같은 경우에는 형변환이 가능하다.
+FruitBox<? extends Object> objBox = null;
+FruitBox<? extends String> strBox = null;
+
+strBox = (FruitBox<? extends String>)objBox;		//가능. 미확정 타입으로 형변환 경고
+objBox = (FruitBox<? extends Object>)strBox;		//가능. 미확정 타입으로 형변환 경고
+
+//형변환이 가능하긴 하지만, 와일드 카드는 타입이 확정된 타입이 아니므로 컴파일러는 미확정 타입으로 형변환하는 것이라고 경고한다.
+```
+
+## 지네릭 타입의 제거
+
+컴파일러는 지네릭 타입을 이용해서 소스파일을 체크하고, 필요한 곳에는 형변환을 넣어준다. 그리고 지네릭 타입을 제거한다.     
+즉, 컴파일된 파일에는 지네릭 타입에 대한 정보가 없는 것이다.    
+
+1. 지네릭 타입의 경계bound를 제거한다.     
+
+> 지네릭 타입이 < T extends Fruit >라면 T는 Fruit로 치환된다.      
+> < T >인 경우는 T는 Object로 치환된다. 그리고 클래스 옆의 선언은 제거된다.      
+
+```java
+class Box <T extends Fruit> {
+	void add(T t) { ... }		}
+//>>>>>>>>>>>>
+class Box {
+	void add(Fruit t) { ... }	}
+```
+
+2. 지네릭 타입을 제거한 후에 타입이 일치하지 않으면, 형변환을 추가한다.     
+
+> List의 get()은 Object타입을 반환하므로 형변환이 필요하다.
+
+```java
+T get(int i) {
+	return list.get(i);	}
+//>>>>>>>>>>>>>>>
+Fruit get(int i) {
+	return (Fruit)list.get(i);		}
+```
+> 와일드 카드가 포함되어 있는 경우에는 다음과 같이 적절한 타입으로의 형변환이 추가된다.
+
+```java
+static Juice makrJuice(FruitBox<? extends Fruit> box) {
+	Strung tmp = "";
+	for(Fruit f : box.getList())	tmp += f + " ";
+	return new Juice(tmp);		}
+//>>>>>>>>>>>>>>>>
+static Juice makeJuice(FruitBox box)	{
+	String tmp = "";
+	Iterator it = box.getList().iterator();
+	while(it.hasNext())	{
+		tmp += (Fruit)it.next() + " ";		}
+	return new Juice(tmp);		}
+```
