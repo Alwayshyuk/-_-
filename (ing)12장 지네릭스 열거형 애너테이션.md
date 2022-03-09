@@ -1211,3 +1211,203 @@ public class EnumEx4 {
 	}
 }
 ```
+# 애너테이션 annotation
+
+## 애너테이션 이란?
+
+ 프로그램의 소스코드 안에 다른 프로그램을 위한 정보를 미리 약속된 형식으로 포함시킨 것이 애너테이션이다.     
+ 애너테이션은 주석처럼 프로그래밍 언어애 영향을 미치지 않으면서도 다른 프로그램애게 유용한 정보를 제공할 수 있다.      
+ 
+ ```java
+ @Test		//이 메서드가 테스트 대상임을 테스트 프로그램에게 알린다.
+ 			//프로그램 자체에는 아무런 영향을 미치지 않는다.
+ public void method()	{ ... }
+ ```
+ 
+JDK애서 제공하는 표준 애너테이션은 주로 컴파일러를 위한 것으로 컴파일러에게 유용한 정보를 제공한다.     
+그리고 새로운 애너테이션을 정의할 때 사용하는 메타 애너테이션을 제공한다.     
+JDK에서 제공하는 애너테이션은 java.lang.annotation패키지에 포함되어 있다.
+ 
+## 표준 애너테이션
+ 
+자바에서 기본적으로 제공하는 애너테이션은 몇 개 없고,      
+그 중 일부는 메타 애너테이션으로 애너테이션을 정의하는데 사용되는 애너테이션의 애너테이션이다.     
+ 
+ ```java
+ @Overrids
+ //컴파일러에게 오버라이딩하는 메서드라는 것을 알린다.
+ @Deprecated
+ //앞으로 사용하지 않을 것을 권장하는 대상에 붙인다.
+ @SuppressWarnings
+ //컴파일러의 특정 경고메시지가 나타나지 않게 해준다.
+ @SafeVarargs
+ //지네릭스 타입의 가변인자에 사용한다.
+ @FunctionalInterface
+ //함수형 인터페이스라는 것을 알린다.
+ @Native
+ //native메서드에서 참조되는 상수 앞에 붙인다.
+ 
+ //메타 애너테이션
+ @Target
+ //애너테이션이 적용가능한 대상을 지정하는데 사용한다.
+ @Documented
+ //애너테이션 정보가 javadoc으로 작성된 문서에 포함되게 한다.
+ @Inherited
+ //애너테이션이 자손 클래스에 상속되도록 한다.
+ @Retention
+ //애너테이션이 유지되는 범위를 지정하는데 사용한다.
+ @Repeatable
+ //애너테이션을 반복해서 적용할 수 있게 한다.
+ ```
+ 
+#### @Override
+
+메서드 앞에만 붙일 수 있는 애너테이션으로, 조상의 메서드를 오버라딩하는 것이라는 걸 컴파일러에게 알려준다.       
+오버라이딩하며 메서드의 이름을 잘못 적는 등의 실수가 있을 때 에러메시지를 출력한다.     
+
+#### @Deprecated
+
+더 이상 사용되지 않는 필드나 메서드에 붙인다.      
+이 애너테이션이 붙은 대상은 다른 것으로 대체되었으니 더 이상 사용하지 않을 것을 권한다는 의미이다.     
+
+#### @FunctionalInterface
+
+함수형 인터페이스를 선언할 때, 이 애너테이션을 붙이면 컴파일러가 함수형 인터페이스를 올바르게 선언했는지 확인하고,      
+잘못된 경우 에러를 발생시킨다. 필수는 아니지만 실수를 방지할 수 있다.     
+
+#### @SuppressWarnings
+
+컴파일러가 보여주는 경고메시지가 나타나지 않게 억제해준다.     
+주로 사용되는 경고 메시지 종류는 drprecation, unchecked, rawtypes, varargs 정도 이다.     
+deprecation은 @Deprecated가 붙은 대상을 사용해서 발생하는 경고를,     
+unchecked는 지네릭스로 타입을 지정하지 않았을 때 발생하는 경고를,     
+rawtypes는 지네릭스를 사용하지 않아서 발생하는 경고를,     
+varargs는 가변인자의 타입이 지네릭 타입일 때 발생하는 경고를 억제할 때 사용된다.     
+억제하려는 경고 메시지를 애너테이션의 뒤에 괄호()안에 문자열로 지정하면 된다.
+
+```java
+@SuppressWarnings("unchecked")		//지네릭스와 관련된 경고를 억제
+ArrayList list = new ArrayList();	//지네릭 타입을 지정하지 않았음.
+list.add(obj);						//여기서 경고가 발생.
+
+//만약 둘 이상의 경고를 동시에 억제하려면 배열처럼 괄호{}를 추가로 사용한다.
+@SuppressWarnings({"deprecation", "unchecked", "varargs"})
+```
+
+```java
+class NewClass{
+	int newField;
+	
+	int getNewField() {
+		return newField;
+	}
+	@Deprecated
+	int oldField;
+	
+	@Deprecated
+	int getOldField() {
+		return oldField;
+	}
+}
+public class AnnotationEx3 {
+	@SuppressWarnings("deprecation")		//deprecation관련 경고 억제
+	public static void main(String[] args) {
+		NewClass nc = new NewClass();
+		
+		nc.oldField = 10;					//@Deprecated가 붙은 대상을 사용.
+		System.out.println(nc.getOldField()); //@Deprecated가 붙은 대상을 사용.
+		
+		@SuppressWarnings("unchecked")				//지네릭 관련 경고를 억제
+		ArrayList<NewClass> list = new ArrayList();	//타입을 지정하지 않음.
+		list.add(nc);	
+	}
+}
+```
+
+main 메서드 앞에 @SuppressWarnings({"deprecation", "unchecked"})로 바꿔서     
+두 종류의 경고를 모두 억제할 수도 있지만 이렇게 한다면      
+나중에 추가된 코드에서 발생할 수 있는 경고까지 억제할 수 있으므로 바람직하지 않다.      
+해당 대상에만 애너테이션을 붙여서 경고의 억제범위를 최소화하는 것이 좋다.
+
+#### @SafeVarargs
+메서드에 선언된 가변인자의 타입이 non-reifiable타입일 경우,       
+해당 메서드를 선언하는 부분과 호출하는 부분에서 "unchecked"경고가 발생한다.    
+해당 코드에 문제가 없다면 @SageVarargs를 사용해서 경고를 억제하여야 한다.               
+이 애너테이션은 static이나 final이 붙은 메서드와 생성자에만 붙일 수 있다.     
+즉, 오버라이딩될 수 있는 메서드에는 사용할 수 없다.    
+지네릭스에서 컴파일 후에도 제거되지 않는 타입을 reifiable타입이라고 하고, 제거되는 타입을 non-reifialbe타입이라고 한다.     
+지네릭 타입들은 대부분 컴파일 시에 제거되므로 non-reifialbe타입이다.
+
+
+
+예를 들어, java.util.Arrays의 asList()는 다음과 같이 정의되어 있으며,    
+이 메서드는 매개변수로 넘겨받은 값들로 배열을 만들어서 새로운 ArrayList객체를 만들어서 반환하는데 이 과정에서 경고가 발생한다.
+
+```java
+public static <T> List<T> asList(T...a)	{
+	return new ArrayList<T>(a);	//ArrayList(E[] array)를 호출. 경고 발생
+//이 ArrayList는 Arrays클래스의 내부 클래스다. java.util.ArrayList가 아니다.
+```
+
+asList()의 매개변수가 가변인자인 동시에 지네릭 타입이다.    
+메서드에 선언된 타입T는 컴파일 과정에서 Object로 바뀐다. 즉, Object[]가 되는 것이다.     
+Object[]에는 모든 타입의 객체가 들어올 수 있으므로, 이 배열로 ArrayList< T >를 생성하는 것은 위험하다고 경고하는 것이다.     
+그러나 asList()가 호출되는 부분을 컴파일러가 체크해서 타입T가 아닌 다른 타입이 들어가지 못하게 할 것이므로 위 코드는 문제가 없다.    
+이럴때 메서드 앞에 @SafeVarargs를 붙여서 이 메서드의 가변인자는 타입 안정성이 있다고 컴파일러에 알려 경고가 발생하지않게 해야한다.     
+메서드를 선언할 때 @SafeVarargs를 붙이면 이 메서드를 호출하는 곳에서 발생하는 경고도 억제된다.     
+반면 @SafeVarargs대신, @SuppressWarnings("unchecked")로 경고를 억제하려면, 메서드 선언부와 호출부 모두에 붙여야한다.    
+그리고 @SafeVarargs로 unchecked경고는 억제할 수 있지만 varargs경고는 억제할 수 없어 습관적으로 같이 붙인다.    
+
+```java
+@SageVarargs		//unchecked경고를 억제한다.
+@SuppressWarnings("varargs")	//varargs경고를 억제한다.
+public static <T> List<T> asList(T...a)	{
+	return new ArrayList<>(a);
+}
+```
+
+@SuppressWarnings("varargs")를 붙이지 않아도 경고없이 컴파일이 되지만     
+-Xlint옵션을 붙여서 컴파일해보면 varargs경고가 발생한다는 것을 알 수 있다.     
+그러므로 가능하면 이 두 애너테이션을 항상 같이 사용하는 것이 좋다.
+
+```java
+class MyArrayList<T> {
+	T[] arr;
+	
+	@SafeVarargs
+	@SuppressWarnings("varargs")
+	MyArrayList(T...arr){
+		this.arr = arr;
+	}
+	@SafeVarargs
+	//@SuppressWarnings("unchecked")
+	public static <T> MyArrayList<T> asList(T...a){
+		return new MyArrayList<>(a);
+	}
+	public String toString() {
+		return Arrays.toString(arr);
+	}
+}
+public class AnnotationEx4 {
+	//@SupressWarnings("unchecked")
+	public static void main(String[] args) {
+		MyArrayList<String> list = MyArrayList.asList("1", "2", "3");
+		
+		System.out.println(list);
+	}
+}
+```
+옵션없이 컴파일했을 때는 아무런 경고가 없지만, -Xlint옵션을 붙여서 컴파일했을 때는 varargs경고가 발생한다.     
+아래와 같이 애너테이션을 추가하면 -Xlint옵션으로 컴파일 하여도 경고가 나타나지 않을 것이다.
+
+```java
+@SafeVarargs
+@SuppressWarnings("varargs")	//애너테이션을 추가
+//@SuppressWarnings("unchecked")
+public static <T> MyArrayList<T> asList(T...a) {
+	return new MyArrayList<>(a);
+}
+```
+
+그리고 예제에서 asList()의 @SafeVarargs를 주석처리하고, asList()와 main()에 붙은 @SuppressWarings("unchecked")를 주석해제한다면      
+@SafeVarargs가 이 두 개의 애너테이션과 같은 효과를 얻는다는 것을 확인할 수 있다.
