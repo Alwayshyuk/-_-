@@ -1772,8 +1772,8 @@ public class AnnotationEx5 {
 		
 		for(Annotation a : annoArr)
 			System.out.println(a);
-		//@java.lang.Deprecated(forRemoval=false, since="")
-		//@tmp.TestInfo(count=1, testType=FIRST, testTools={"JUnit"}, testedBy="aaa", testDate=@tmp.DateTime(yymmdd="220309", hhmmss="191930"))
+//@java.lang.Deprecated(forRemoval=false, since="")
+//@tmp.TestInfo(count=1, testType=FIRST, testTools={"JUnit"}, testedBy="aaa", testDate=@tmp.DateTime(yymmdd="220309", hhmmss="191930"))
 	}
 }
 @Retention(RetentionPolicy.RUNTIME)		//실행 시에 사용가능하도록 지정
