@@ -138,3 +138,62 @@ public class Thread {
 
 Thread클래스를 상속받으면, 자손 클래스에서 조상인 Thread클래스의 메서드를 직접 호출할 수 있지만,    
 Runnable을 구현하면 Thread클래스의 static메서드인 currentThread()를 호출하여 쓰레드에 대한 참조를 얻어와야만 호출이 가능하다.
+
+
+> static Thread currentThread()	현재 실행중인 쓰레드의 참조를 반환한다.
+> String getName()	쓰레드의 이름을 반환한다.
+
+그래서 Thread를 상속받은 ThreadEx1_1에서 간단히 getName()을 호출하면 되지만,    
+Runnable을 구현한 ThreadEx1_2에는 멤버가 run()밖에 없기 때문에 Thread클래스의 getName()을 호출하려면,     
+Thread.currentThread().getName()와 같이 해야 한다.     
+
+
+참고로 쓰레의 이름은 다음과 같은 생성자나 메서드를 통해 지정 또는 변경할 수 잏ㅆ따.
+
+```java
+Thread (Runnable target, String name)
+Thread (String name)
+void setName(String name)
+```
+
+예제13-1의 결과에서도 알 수 있듯이 쓰레드의 이름을 지정하지 않으면 Thread-번호의 형식으로 이름이 정해진다.     
+그리고 System.out.println(Thread.currentTread().getName());는 아래의 코드를 한 줄로 줄여 쓴 것이다.
+
+```java
+Thread t = Thread.currentThread();
+String name = t.getName();
+System.out.println(name);
+```
+
+#### 쓰레드의 실행-start()
+쓰레드를 생성했다고 해서 자동으로 실행되는 것은 아니다. start()를 호출해야만 쓰레드가 실행된다.    
+
+```java
+t1.start();	//쓰레드 t1을 실행시킨다.
+t2.start();	//쓰레드 t2를 실행시킨다.
+```
+
+사실 start()가 호출되었다고 해서 바로 실행되는 것이 아니라, 일단 실행대기 상태에 있다가 자신의 차례까 되어야 실행된다.     
+만약 실행대기중인 쓰레드가 하나도 없다면 곧바로 실행상태가 된다.     
+
+> 쓰레드의 실행순서는 OS의 스케쥴러가 작성한 스케쥴에 의해 결정된다.
+
+한 번 실행이 종료된 쓰레드는 다시 실행할 수 없다. 즉, 하나의 쓰레드에 대해 start()가 한 번만 호출될 수 있다는 뜻이다.     
+그래서 만일 쓰레드의 작업을 한 번 더 수행해야 한다면 아래의 오른쪽 코드와 같이 새로운 쓰레드를 생성한 다음 start()를 호출해야 한다.      
+만일 하나의 쓰레드에 대해 start()를 두 번 이상 호출하면 실행시에 IllegalThreadStateException이 발생한다.
+
+```java
+ThreadEx1_1 t1 = new ThreadEx1_1();
+t1.start();
+t1.start();	//예외 발생
+
+ThreadEx1_1 t1 = new ThreadEx1_1();
+t1.start();
+t1 = new ThreadEx1_1();	//다시 생성
+t1.start();
+```
+
+# start()와 run()
+
+main메서드에서 run()을 호출하는 것은 생성된 쓰레드를 실행시키는 것이 아니라 단순히 클래스에 선언된 메서드를 호출하는 것일 뿐이다.     
+
