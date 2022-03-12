@@ -84,6 +84,7 @@ class ThreadEx1_1 extends Thread {
 	public void run() {
 		for(int i = 0; i<5; i++) {
 			System.out.println(getName());	//조상인 Thread의 getName()을 호출
+			//Thread-0	Thread-0	Thread-0	Thread-0	Thread-0
 		}
 	}
 }
@@ -92,6 +93,7 @@ class ThreadEx1_2 implements Runnable{
 		for(int i = 0 ; i < 5; i++) {
 			//Thread.currentThread() - 현재 실행중인 Thread를 반환한다.
 			System.out.println(Thread.currentThread().getName());
+			//Thread-1	Thread-1	Thread-1	Thread-1	Thread-1
 		}
 	}
 }
