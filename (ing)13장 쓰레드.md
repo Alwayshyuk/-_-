@@ -601,3 +601,373 @@ setMaxPriority()는 쓰레드가 쓰레드 그룹에 추가되기 이전에 호�
 그리고 참조변수 없이 쓰레드를 생성해서 바로 실행시켰는데 그렇다고 이 쓰레드가 가비지 컬렉터의 제거 대상이 되지는 않는다.     
 이 쓰레드의 참조가 ThreadGroup에 저장되어 있기 때문이다.
 
+# 데몬 쓰레드 daemon Thread
+
+데몬 쓰레드는 다른 일반 쓰레드(비 데몬 쓰레드)의 작업을 돕는 보조적인 역할을 수행하는 쓰레드이다.     
+데몬 쓰레드는 일반 쓰레드의 보조역할을 수행하므로 일반 쓰레드가 종료되면,     
+데몬 쓰레드의 존재 의미가 없어져 데몬 쓰레드는 강제적으로 자동 종료된다.     
+이를 제외하곤 데몬 쓰레드와 일반 쓰레드는 크게 다르지 않다.     
+데몬 쓰레드의 예로는 가비지 컬렉터, 워드프로세서의 자동저장, 화면자동갱신 등이 있다.      
+
+
+데몬 쓰레드는 무한루프와 조건문을 이용해서 실행 후 대기하고 있다가 특정 조건이 만족되면 작업을 수행하고 다시 대기하도록 작성한다.        
+데몬 쓰레드는 일반 쓰레드의 작성방법과 실행방법이 같으며 다만 쓰레드를 생성한 다음 실행 전에 setDaemon(true)를 호출하면 된다.     
+그리고 데몬 쓰레드가 생성한 쓰레드는 자동적으로 데몬 쓰레드가 된다.        
+
+```java
+boolean isDaemon()
+//쓰레드가 데몬인지 확인한다.
+void setDaemon(boolean on)
+// 쓰레드를 데몬 쓰레드 또는 사용자 쓰레드로 변경한다.
+//매개변수 on이 true면 데몬 쓰레드가 된다.
+```
+
+```java
+public class ThreadEx10 implements Runnable{
+	static boolean autoSave = false;
+
+	public static void main(String[] args) {
+		Thread t = new Thread(new ThreadEx10());
+		t.setDaemon(true);	//이 부분이 없으면 종료되지 않는다.
+		t.start();
+		
+		for(int i = 1; i<=10; i++) {
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {}
+				System.out.println(i);
+				
+				if(i==5)
+					autoSave = true;
+		}
+		System.out.println("프로그램을 종료합니다.");
+	}
+	public void run()	{
+		while(true) {
+			try {
+				Thread.sleep(2*1000);
+			} catch (InterruptedException e) {}
+			//autoSave의 값이 true면 autoSave()를 호출한다.
+			if(autoSave)
+				autoSave();
+		}
+	}
+	public void autoSave() {
+		System.out.println("작업 파일이 자동 저장되었습니다.");
+	}
+}
+```
+3초마다 변수 autoSave의 값을 확인해서 그 값이 true면, autoSave()를 호출하는 일을 반복하도록 쓰레드를 작성하였다.    
+만일 이 쓰레드를 데몬 쓰레드로 설정하지 않았다면, 이 프로그램을 강제종료하지 않는 한 종료되지 않을 것이다.    
+setDaemon메서드는 반드시 start()를 호출하기 전에 실행되어야 한다. 그렇지 않으면 IllegalThreadStateException이 발생한다.     
+
+```java
+import java.util.*;
+
+public class ThreadEx11{
+	
+	public static void main(String args[]) throws Exception{
+		ThreadEx11_1 t1 = new ThreadEx11_1("Thread1");
+		ThreadEx11_2 t2 = new ThreadEx11_2("Thread2");
+		t1.start();
+		t2.start();
+		
+//		[1] name : Signal Dispatcher, group: system, damone: true
+//
+//		[2] name : Notification Thread, group: system, damone: true
+//
+//		[3] name : Thread1, group: main, damone: false
+//		java.base@17.0.1/java.lang.Thread.sleep(Native Method)
+//		app//tmp.ThreadEx11_1.run(ThreadEx11.java:20)
+//
+//		[4] name : Reference Handler, group: system, damone: true
+//		java.base@17.0.1/java.lang.ref.Reference.waitForReferencePendingList(Native Method)
+//		java.base@17.0.1/java.lang.ref.Reference.processPendingReferences(Reference.java:253)
+//		java.base@17.0.1/java.lang.ref.Reference$ReferenceHandler.run(Reference.java:215)
+//
+//		[5] name : Attach Listener, group: system, damone: true
+//
+//		[6] name : Thread2, group: main, damone: false
+//		java.base@17.0.1/java.lang.Thread.dumpThreads(Native Method)
+//		java.base@17.0.1/java.lang.Thread.getAllStackTraces(Thread.java:1662)
+//		app//tmp.ThreadEx11_2.run(ThreadEx11.java:30)
+//
+//		[7] name : Finalizer, group: system, damone: true
+//		java.base@17.0.1/java.lang.Object.wait(Native Method)
+//		java.base@17.0.1/java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:155)
+//		java.base@17.0.1/java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:176)
+//		java.base@17.0.1/java.lang.ref.Finalizer$FinalizerThread.run(Finalizer.java:172)
+//
+//		[8] name : Common-Cleaner, group: InnocuousThreadGroup, damone: true
+//		java.base@17.0.1/java.lang.Object.wait(Native Method)
+//		java.base@17.0.1/java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:155)
+//		java.base@17.0.1/jdk.internal.ref.CleanerImpl.run(CleanerImpl.java:140)
+//		java.base@17.0.1/java.lang.Thread.run(Thread.java:833)
+//		java.base@17.0.1/jdk.internal.misc.InnocuousThread.run(InnocuousThread.java:162)
+	}
+}
+
+class ThreadEx11_1 extends Thread	{
+	ThreadEx11_1(String name){
+		super(name);
+	}
+	public void run() {
+		try {
+			sleep(5*1000);	//5초 기다린다.
+		} catch (InterruptedException e) {}
+	}
+}
+
+class ThreadEx11_2 extends Thread	{
+	ThreadEx11_2(String name){
+		super(name);
+	}
+	public void run() {
+		Map map = getAllStackTraces();
+		Iterator it = map.keySet().iterator();
+		
+		int x = 0;
+		
+		while(it.hasNext()) {
+			Object obj = it.next();
+			Thread t = (Thread)obj;
+			StackTraceElement[] ste = (StackTraceElement[])(map.get(obj));
+			
+			System.out.println("["+ ++x + "] name : "+ t.getName() + ", group: " + t.getThreadGroup().getName()+", damone: "+ t.isDaemon());
+			
+			for(int i = 0; i<ste.length; i++) {
+				System.out.println(ste[i]);
+			}
+			System.out.println();
+		}
+	}
+}
+```
+getAllStackTraces()을 이용하면 실행 중 또는 대기상태, 즉 작업이 완료되지 않은 모든 쓰레드의 호출스택을 출력할 수 있다.     
+결과를 보며 getAllStackTrace()가 호출되었을 때, 새로 생성한 Thread1, Thread2를 포함해서      
+모두 9개의 쓰레드가 실행 중 또는 대기상태에 있다는 것을 알 수 있다.    
+
+프로그램을 실행하면 JVM은 가비지컬렉션, 이벤트처리, 그래픽처리와 같이 프로그램이 실행되는 데 필요한 보조작업을 수행하는      
+데몬 쓰레드들을 자동적으로 생성해서 실행시킨다. 그리고 이들은 system쓰레드 그룹 또는 main쓰레드 그룹에 속한다.     
+AWT나 Swing과 같이 GUI를 가진 프로그램을 실행하는 경우에는 이벤트와 그래픽처리를 위해 더 많은 수의 데몬 쓰레드가 생성된다.    
+> main쓰레드는 이미 종료되었기 때문에 결과에 포함되지 않았다.     
+
+# 쓰레드의 실행제어
+쓰레드 프로그래밍이 어려운 이유는 동기화syncronization와 스케줄링scheduling 때문이다.      
+효율적인 멀티쓰레드 프로그램을 만들기 위해서는 보다 정교한 스케줄링을 통해     
+프로세스에게 주어진 자원과 시간을 여러 쓰레드가 낭비없이 잘 사용하도록 프로그래밍 해야 한다.     
+쓰레드의 스케줄링을 잘하기 위해서는 쓰레드의 상태와 관련 메서드를 잘 알아야 하는데,     
+먼저 쓰레드의 스케줄링과 관련된 메서드는 다음과 같다.     
+
+```java
+static void sleep(long millis)
+static void sleep(long millis, int nanos)
+//지정된 시간동안 쓰레드를 일시정지시킨다.
+//지정한 시간이 지나면 자동적으로 다시 실행대기상태가 된다.
+
+void join()
+void join(int millis)
+void join(int millis, int nanos)
+//지정된 시간동안 쓰레드가 실행되도록 한다.
+//지정된 시간이 지나거나 작업이 종료되면 join()을 호출한 쓰레드로 다시 돌아와 실행을 계속한다.
+
+void interrupt()
+//sleep()이나 join()에 의해 일시정지상태인 쓰레드를 깨워서 실행대기상태로 만든다.
+//해당 쓰레드에서는 interruptedException이 발생함으로써 일시정지상태를 벗어나게 한다.
+
+void stop()
+//쓰레드를 즉시 종료시킨다.
+
+void suspend()
+//쓰레드를 일시정지시킨다.
+//resume()을 호출하면 다시 실행대기상태가 된다.
+
+void resume()
+//suspend()에 의해 일시정지상태에 있는 쓰레드를 실행대기상태로 만든다.
+
+static void yield()
+//실행 중에 자신에게 주어진 실행시간을 다른 쓰레드에게 양보yield하고 자신은 실행대기상태가 된다.
+```
+> resume(), stop(), suspend()는 쓰레드를 교착상태로 만들기 쉽기 때문에 deprecated되었다.
+
+쓰레드의 상태.
+- NEW : 쓰레드가 생성되고 아직 start()가 호출되지 않은 상태
+- RUNNABLE : 실행 중 또는 실행 가능한 상태
+- BLOCKED : 동기화 블럭에 의해서 일시정지된 상태(lock이 풀릴 때까지 기다리는 상태)
+- WAITING, TIMED_WAITING : 쓰레드의 작업이 종료되지는 않았지만 실행가능하지 않은 일시정지 상태
+- TIME_WAITING은 일시정지시간이 지정된 경우를 의미한다.
+- TERMINATED : 쓰레드의 작업이 종료된 상태
+
+> 쓰레드의 상태는 Thread의 getState()메서드를 호출해서 확인할 수 있다.
+
+#### sleep(long millis) - 일정시간동안 쓰레드를 멈추게 한다.
+sleep()은 지정된 시간동안 쓰레드를 멈추게 한다.
+> static void sleep(long millis)
+> static void sleep(long millis, int nanos)
+
+밀리세컨드와 나노세컨드의 시간단위로 세밀하게 값을 지정할 수 있지만 어느 정도의 오차가 발생할 수 있다.    
+sleep()에 의해 일시정지 상태가 된 쓰레드는 지정된 시간이 다 되거나 interrupt()가 호출되면(InterruptedException발생),     
+잠에서 꺠어나 실행대기 상태가 된다.    
+그래서 sleep()을 호출할 때는 항상 try-catch문으로 예외를 처리해줘야 한다.     
+매번 예외처리를 해주는 것이 번거롭기 때문에 아래와 같이 메서드를 만들어서 사용하기도 한다.    
+
+```java
+void delay(long millis) {
+	try{
+		Thread.sleep(millis);
+	}catch{InterruptedException e) {}
+```
+
+```java
+public class ThreadEx12 {
+	public static void main(String[] args) {
+		ThreadEx12_1 th1 = new ThreadEx12_1();
+		ThreadEx12_2 th2 = new ThreadEx12_2();
+		th1.start();
+		th2.start();
+		
+		try {
+			th1.sleep(2000);
+		} catch (InterruptedException e) {}
+	
+		System.out.println("<<main 종료>>");
+	}
+}
+class ThreadEx12_1 extends Thread {
+	public void run() {
+		for(int i = 0; i<300; i++)
+			System.out.print("-");
+		System.out.println("<<th1 종료>>");
+	}
+}
+class ThreadEx12_2 extends Thread {
+	public void run() {
+		for(int i = 0; i<300; i++)
+			System.out.print("|");
+		System.out.println("<<th2 종료>>");
+	}
+}
+//||----|||---||||||------------<<th1 종료>>
+//|||||||||<<th2 종료>>
+//<<main 종료>>
+```
+
+th1과 th2에 대해 start()를 호출하자마자 th1.sleep(2000)을 호출하여 쓰레드 th1이 2초 동안 작업을 멈추고 일시정지 상태에 있었으므로     
+th1이 가장 늦게 종료되어야 하는데 가장 먼저 종료되었다.      
+그 이유는 sleep()이 항상 현재 실행 중인 쓰레드에 대해 작동하기 떄문에 th1.sleep(2000)과 같이 호출하였어도    
+실제로 영향을 받는 것은 main메서드를 실행하는 main쓰레드이다.       
+그래서 sleep()은 static으로 선언되어 있으며 참조변수를 이용해서 호출하기 보다는 Thread.sleep(2000);과 같이 해야한다.     
+
+#### interrupt()와 interrupted() - 쓰레드의 작업을 취소한다.
+interrupt()는 쓰레드에게 작업을 멈추라고 요청한다. 단지 멈추라고 요청하는 것일 뿐 쓰레드를 강제로 종료시키지는 못한다.     
+interrupt()는 그저 쓰레드의 interrupted상태(인스턴스 변수)를 바꾸는 것일 뿐이다.     
+interrupted()는 쓰레드에 대해 interrupt()가 호출되었는지 알려준다.      
+interrupt()가 호출되었다면 true, 그렇지 않으면 false를 반환한다.
+
+```java
+Thread th = new Thread();
+th.start();
+	...
+th.interrupt();	//쓰레드 th에 interrupt()를 호출한다.
+
+class MyThread extends Thread {
+	public void run()	{
+		while(!interrupted())	{	//interrupted()의 결과가 false인 동안 반복
+			...
+		}
+	}
+}
+```
+
+interrupt()가 호출되면, interrupted()의 결과가 false에서 true로 바뀌어 while문을 벗어나게 된다.     
+isInterrupted()도 쓰레드의 interrupt()가 호출되었는지 확인하는데 사용할 수 있지만,     
+interrupt()와 달리 isInterrupted()는 쓰레드의 interrupted상태를 false로 초기화하지 않는다.
+
+```java
+void interrupt()
+//쓰레드의 interrupted상태를 false에서 true로 변경
+boolean isInterrupted()
+//쓰레드의 interrupted상태를 반환
+static boolean interrupted()
+//현재 쓰레드의 interrupted상태를 반환 후, false로 변경.
+```
+
+쓰레드가 sleep(), wait(), join()에 의해 일시정지 상태에 있을 때, 해당 쓰레드에 대해 interrupt()를 호출하면,      
+sleep(), wait(), join()에서 InterruptedException이 발생하고 쓰레드는 실행대기 상태로 바뀐다.     
+즉, 멈춰있던 쓰레드를 깨워서 실행가능한 상태로 만드는 것이다.    
+
+```java
+import javax.swing.JOptionPane;
+
+public class ThreadEx13 {
+
+	public static void main(String[] args) throws Exception {
+		ThreadEx13_1 t1 = new ThreadEx13_1();
+		t1.start();
+
+		String input = JOptionPane.showInputDialog("아무 값이나 입력하세요");
+		System.out.println("입력하신 값은 " +input+"입니다.");
+		t1.interrupt();	//interrupt()를 호출하면, interrupted가 true가 된다.
+		System.out.println(t1.isInterrupted());
+	}
+}
+class ThreadEx13_1 extends Thread	{
+	public void run() {
+		int i = 10;
+		
+		while(i !=0 && !isInterrupted()) {
+			System.out.println(i--);
+			for(long x = 0 ; x<2500000000L; x++);
+		}
+		System.out.println("카운트가 종료되었습니다.");
+	}
+}
+```
+사용자의 입력이 끝나자 interrupt()에 의해 카운트 다운이 중간에 멈췄다.
+
+```java
+import javax.swing.JOptionPane;
+
+public class ThreadEx14 {
+
+	public static void main(String[] args) throws Exception {
+		ThreadEx14_1 t1 = new ThreadEx14_1();
+		t1.start();
+
+		String input = JOptionPane.showInputDialog("아무 값이나 입력하세요");
+		System.out.println("입력하신 값은 " +input+"입니다.");
+		t1.interrupt();	//interrupt()를 호출하면, interrupted가 true가 된다.
+		System.out.println(t1.isInterrupted());
+	}
+}
+class ThreadEx14_1 extends Thread	{
+	public void run() {
+		int i = 10;
+		
+		while(i !=0 && !isInterrupted()) {
+			System.out.println(i--);
+			try {
+				Thread.sleep(1000);
+			} catch (Exception e) {}
+		}
+		System.out.println("카운트가 종료되었습니다.");
+	}
+}
+```
+이전 예제에서 시간지연을 위한 for문 대신 Thread.sleep(1000)으로 1초 동안 지연되도록 변경했을 뿐인데, 카운드가 종료되지 않았다.    
+그 이유는 Thread.sleep(1000)에서 InterruptedException이 발생했기 때문이다.     
+sleep()에 의해 쓰레드가 잠시 멈췄을 때 interrupt()를 호출하면 InterruptedException이 발생되고     
+interrupted상태는 false로 자동 초기화된다.    
+그럴 때는 아래와 같이 catch블럭에 interrupt()를 추가로 넣어줘서 쓰레드의 interrupted상태를 true로 다시 바꿔줘야 한다.
+
+```java
+try{
+	Thread.sleep(1000);
+}catch(InterruptedException e){}
+//>>>>>>>>>>>>>>>
+try{
+	Thread.sleep(1000);
+}catch(InterruptedException e){
+	interrupt();
+}
+```
