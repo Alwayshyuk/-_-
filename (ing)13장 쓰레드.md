@@ -971,3 +971,360 @@ try{
 	interrupt();
 }
 ```
+#### suspend(), resume(), stop()
+
+suspend()는 stop()처럼 쓰레드를 멈추게 한다.    
+suspend()에 의해 정지된 쓰레드는 resume()을 호출해야 다시 실행대기 상태가 된다.    
+stop()은 실행 즉시 쓰레드가 종료된다.     
+suspend()와 stop()은 교착상태를 일으키기 쉽게 작성되어 사용이 권장되지 않고 deprcated 되었다.    
+
+```java
+public class ThreadEx15 {
+
+	public static void main(String[] args) {
+		RunImplEx15 r = new RunImplEx15();
+		Thread th1 = new Thread(r, "*");
+		Thread th2 = new Thread(r, "**");
+		Thread th3 = new Thread(r, "***");
+
+		th1.start();
+		th2.start();
+		th3.start();
+		
+		try {
+			System.out.println();
+			Thread.sleep(2000);
+			System.out.println();
+			th1.suspend();	//쓰레드 th1을 잠시 정지시킨다.
+			Thread.sleep(2000);
+			System.out.println();
+			th2.suspend();
+			Thread.sleep(3000);
+			System.out.println();
+			th1.resume();	//쓰레드 th1을 다시 동작하도록 한다.
+			Thread.sleep(3000);
+			System.out.println();
+			th1.stop();		//쓰레드를 강제종료시킨다.
+			th2.stop();
+			Thread.sleep(2000);
+			System.out.println();
+			th3.stop();
+		} catch (InterruptedException e) {}
+	}
+
+}
+class RunImplEx15 implements Runnable{
+	public void run() {
+		while(true) {
+			System.out.println(Thread.currentThread().getName());
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {}
+		}
+	}
+}
+```
+sleep(2000)은 쓰레드를 2초간 멈추게 하지만, 2초 후에 바로 실행상태가 아닌 실행대기상태가 된다.
+
+```java
+public class ThreadEx16 {
+
+	public static void main(String[] args) {
+		RunImplEx16 r1 = new RunImplEx16();
+		RunImplEx16 r2 = new RunImplEx16();
+		RunImplEx16 r3 = new RunImplEx16();
+		
+		Thread th1 = new Thread(r1, "*");
+		Thread th2 = new Thread(r2, "**");
+		Thread th3 = new Thread(r3, "***");
+		
+		th1.start();
+		th2.start();
+		th3.start();
+		
+		try {
+			Thread.sleep(2000);
+			r1.suspend();
+			Thread.sleep(2000);
+			r2.suspend();
+			Thread.sleep(3000);
+			r1.resume();
+			Thread.sleep(3000);
+			r1.stop();
+			r2.stop();
+			Thread.sleep(2000);
+			r3.stop();
+		} catch (InterruptedException e) {}
+	}
+}
+class RunImplEx16 implements Runnable	{
+	boolean suspended = false;
+	boolean stopped = false;
+	
+	public void run() {
+		while(!stopped) {
+			if(!suspended) {
+				System.out.println(Thread.currentThread().getName());
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {}
+			}
+		}
+		System.out.println(Thread.currentThread().getName() + "- stopped");
+	}
+	public void suspend() { suspended = true;}
+	public void resume() { suspended = true;}
+	public void stop()	{ stopped = true;}
+}
+```
+```java
+public class ThreadEx18 {
+
+	public static void main(String[] args) {
+		ThreadEx18_1 th1 = new ThreadEx18_1("*");
+		ThreadEx18_1 th2 = new ThreadEx18_1("**");
+		ThreadEx18_1 th3 = new ThreadEx18_1("***");
+		th1.start();
+		th2.start();
+		th3.start();
+
+		try {
+			Thread.sleep(2000);
+			th1.suspend();
+			Thread.sleep(2000);
+			th2.suspend();
+			Thread.sleep(3000);
+			th1.resume();
+			Thread.sleep(3000);
+			th1.stop();
+			th2.stop();
+			Thread.sleep(2000);
+			th3.stop();
+		} catch (InterruptedException e) {}
+	}
+}
+class ThreadEx18_1 implements Runnable {
+	boolean suspended = false;
+	boolean stopped = false;
+
+	Thread th;
+
+	ThreadEx18_1(String name) {
+		th = new Thread(this, name); // Thread(Runnable r, String name)
+	}
+
+	public void run() {
+		String name = th.getName();
+		while (!stopped) {
+			if (!suspended) {
+				System.out.println(name);
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					System.out.println(name + "-interrupted");
+				}
+			} else
+				Thread.yield();
+		}
+		System.out.println(name + "-stopped");
+	}
+
+	public void suspend() {
+		suspended = true;
+		th.interrupt();
+		System.out.println(th.getName() + "-interrupt() by suspend()");
+	}
+
+	public void stop() {
+		stopped = true;
+		th.interrupt();
+		System.out.println(th.getName() + "-interrupt() by stop()");
+	}
+
+	public void resume() {
+		suspended = false;
+	}
+
+	public void start() {
+		th.start();
+	}
+}
+```
+이 전의 에제에 yield()와 interrupt()를 추가해서 예제의 효율과 응답성을 향상시켰다.    
+
+```java
+while(!stopped) {
+	if(!suspended) {
+		...
+		try{
+			Thread.sleep(1000);
+		}catch(InterruptedException e){}
+	}
+}
+```
+위 코드에서 만일 suspended값이 true라면, 즉 잠시 실행을 멈추게 한 상태라면, 쓰레드는 주어진 실행시간을     
+그저 while문을 의미없이 돌며 낭비하게 될 것이다. 이를 바른 대기상태busy-waiting이라고 한다.    
+
+```java
+while(!stopped) {
+	if(!suspended) {
+		...
+		try{
+			Thread.sleep(1000);
+		}catch(InterruptedException e){}
+	}else{
+		Thread.yiedl();
+	}
+}
+```
+그러나 위 코드는 같은 경우에 yield()를 호출해서 남은 실행시간을 while문에서 낭비하지 않고     
+다른 쓰레드에게 양보yield하게 되므로 더 효율적이다. 
+또한 suspend() 메서드와 stop()메서드에 th.interrupt()를 추가하였다.    
+이는 stopped의 값이 true가 되었을 떄 interrupt()를 호출하여 sleep()에서 InterruptedException을 발생시키므로     
+즉시 일시정지 상태에서 벗어나게하고 응답성을 향상시킨다.
+
+####join()-다른 쓰레드의 작업을 기다린다.
+ 쓰레드 자신이 하던 작업을 잠시 멈추고 다른 쓰레드가 지정된 시간동안 작업을 수행하도록 할 때 join()을 사용한다.
+ 
+ ```java
+ void join()
+ void join(long millis)
+ void join(long millis, int nanos)
+ ```
+ 
+ 시간을 지정하지 않으면, 해당 쓰레드가 작업을 모두 마칠 때까지 기다리게 된다.    
+ 작업 중에 다른 쓰레드의 작업이 먼저 수행되어야할 필요가 있을 때 join()을 사용한다.
+ 
+ ```java
+ try{
+ 	th1.join();	//현재 실행중인 쓰레드가 쓰레드th1의 작업이 끝날때까지 기다린다.
+ }catch(InterruptedException e) {}
+ ```
+ 
+ join()도 sleep()처럼 interrupt()에 의해 대기상태에서 벗어날 수 있으며, join()이 호출되는 부분을 try-catch문으로 감싸야 한다.    
+ join()과 sleep()은 유사한 점이 많지만, 다른 점은 join()은 현재 쓰레드가 아닌 특정 쓰레드에 대해 동작하므로 static이 아니라는 것이다.
+ 
+> join()은 자신의 작업 중간에 다른 쓰레드의 작업을 참여join시킨다는 의미로 이름 지어진 것이다.
+ 
+ ```java
+ public class ThreadEx19 {
+
+	static long startTime = 0;
+	
+	public static void main(String[] args) {
+		ThreadEx19_1 th1 = new ThreadEx19_1();
+		ThreadEx19_2 th2 = new ThreadEx19_2();
+		th1.start();
+		th2.start();
+		startTime = System.currentTimeMillis();
+		
+		try {
+			th1.join();	//main쓰레드가 th1의 작업이 끝날때까지 기다린다.
+			th2.join();	//main쓰레드가 th2의 작업이 끝날때까지 기다린다.
+		} catch (InterruptedException e) {}
+		
+		System.out.println("소요시간: " + (System.currentTimeMillis() - startTime));
+	}
+}
+class ThreadEx19_1 extends Thread {
+	public void run() {
+		for(int i = 0; i< 300; i++)
+			System.out.print("-");
+	}
+}
+class ThreadEx19_2 extends Thread {
+	public void run() {
+		for(int i = 0; i< 300; i++)
+			System.out.print("|");
+	}
+}
+```
+join()을 사용하지 않았으면 main쓰레드는 바로 종료되었겠지만,      
+join()으로 쓰레드th1과 th2의 작업을 마칠 때 까지 main쓰레드가 기다리도록 했다.              
+
+```java
+public class ThreadEx20 {
+
+	public static void main(String[] args) {
+		ThreadEx20_1 gc = new ThreadEx20_1();
+		gc.setDaemon(true);
+		gc.start();
+		
+		int requiredMemory = 0;
+		
+		for(int i = 0; i<20; i++) {
+			requiredMemory = (int)(Math.random()*10)*20;
+			
+			//필요한 메모리가 사용할 수 있는 양보다 크거나 전체 메모리의 60%이상을
+			//사용했을 경우 gc를 깨운다.
+			if(gc.freeMemory()<requiredMemory
+					|| gc.freeMemory() < gc.totalMemory()*0.4) {
+				gc.interrupt(); 	//잠자고 있는 쓰레드 gc를 깨운다.
+			}
+			gc.usedMemory += requiredMemory;
+			System.out.println("usedMemory: " + gc.usedMemory);
+		}
+	}
+}
+
+class ThreadEx20_1 extends Thread {
+	final static int MAX_MEMORY = 1000;
+	int usedMemory = 0;
+
+	public void run() {
+		while (true) {
+			try {
+				Thread.sleep(10 * 1000);
+			} catch (InterruptedException e) {
+				System.out.println("Awaken by interrupt().");
+			}
+			gc(); // garbage collection을 수행한다.
+			System.out.println("Garbage Collected. Free Memory: " + freeMemory());
+		}
+	}
+	public void gc() {
+		usedMemory -= 300;
+		if (usedMemory < 0)
+			usedMemory = 0;
+	}
+
+	public int totalMemory() {
+		return MAX_MEMORY;
+	}
+
+	public int freeMemory() {
+		return MAX_MEMORY - usedMemory;
+	}
+}
+```
+이 예제는 JVM의 가비지 컬렉터를 흉내 내어 간단히 구현해 본 것이다.     
+먼저 sleep()을 이용해서 10초 마다 한 번씩 가비지 컬렉션을 수행하는 쓰레드를 만든 다음, 쓰레드를 생성해서 데몬 쓰레드로 설정하였다.      
+
+
+반복문을 사용해서 메모리의 양을 계속 감소시키도록 했고,     
+매 반복마다 if문으로 메모리를 확인해서 남은 메모리가 전체 메모리의 40%미만일 경우에 interrupt()를 호출해서,     
+즉시 가비지 컬렉터 쓰레드를 깨워서 gc()를 수행하도록 하였다.     
+
+
+그러나 예제의 실행결과를 보면 MAX_MEMORY가 1000임에도 불구하고 usedMemory가 1000을 넘는 것을 알 수 있다.    
+이는 쓰레드 gc가 interrupt()에 의해서 깨어났음에도 불구하고       
+gc()가 수행되기 이전에 main쓰레드의 작업이 수행되어 메모리를 사용하기 때문이다.      
+그래서 쓰레드 gc를 깨우는 것뿐만 아니라 join()을 이용해서 쓰레드 gc가 작업할 시간을 어느정도 주고    
+main쓰레드가 기다리도록 해서, 사용할 수 있는 메모리가 확보된 다음에 작업을 계속 하는 것이 필요하다.
+
+```java
+if(gc.freeMemory()<requiredMemory...
+	gc.interrupt();
+}
+//>>>>>>>>>>>>>>>>
+if(gc.freeMemory()<requiredMemory...
+	gc.interrupt();
+	trt{
+		gc.join(100);
+	}catch(InterruptedException e){}
+}
+```
+그래서 코드를 아래와 같이 join()을 호출해서 쓰레드 gc가 0.1초 동안 수행될 수 있도록 변경해야한다.     
+가비지 컬렉터와 같은 데몬 쓰레드의 우선순위를 낮추기 보다는 sleep()을 이용해서 주기적으로 실행되도록 하다가      
+필요할 때마다 interrupt()를 호출해서 즉시 가비지 컬렉션이 이루어지도록 하는 것이 좋다.   
+그리고 필요하다면 join()도 함께 사용해야 한다.
