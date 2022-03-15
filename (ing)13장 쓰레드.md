@@ -1328,3 +1328,147 @@ if(gc.freeMemory()<requiredMemory...
 가비지 컬렉터와 같은 데몬 쓰레드의 우선순위를 낮추기 보다는 sleep()을 이용해서 주기적으로 실행되도록 하다가      
 필요할 때마다 interrupt()를 호출해서 즉시 가비지 컬렉션이 이루어지도록 하는 것이 좋다.   
 그리고 필요하다면 join()도 함께 사용해야 한다.
+# 쓰레드의 동기화
+싱글쓰레드 프로세스의 경우 프로세스 내에서 단 하나의 쓰레드만 작업하기 때문에      
+프로세스의 자원을 가지고 작업하는데 별문제가 없지만,    
+멀티쓰레드 프로세스의 경우 여러 쓰레드가 같은 프로세스 내의 자원을 공유해서 작업하기 때문에     
+서로의 작업에 영향을 주게 된다.    
+이러한 일이 발생하는 것을 방지하기 위해서 한 쓰레드가 특정 작업을 마치기 전까지     
+다른 쓰레드에 의해 방해받지 않도록 하는 것이 필요하다.    
+그래서 도입된 개념이 임계 영역critical section과 잠금lock이다.    
+공유 데이터를 사용하는 코드 영역을 임계 영역으로 지정해놓고,     
+공유 데이터(객체)가 가지고 있는 lock을 획득한 단 하나의 쓰레드만 이 영역 내의 코드를 수행할 수 있게 한다.     
+그리고 해당 쓰레드가 임계 영역 내의 모든 코드를 수행하고 벗어나서 lock을 반납해야만     
+다른 쓰레드가 반납된 lock을 획득하여 임계 영역의 코드를 수행할 수 있게 된다.     
+
+* 이처럼 한 쓰레드가 진행 중인 작업을 다른 쓰레드가 간섭하지 못하도록 막는 것을 쓰레드의 동기화syncronization라고 한다.       
+
+## synchronized를 이용한 동기화
+
+synchronized 키워드를 이용한 동기화는 임계 영역을 설정하는데 사용된다.    
+
+```java
+//1. 메서드 전체를 임계 영역으로 지정
+public synchronized void calcSum() { ... }
+
+//2. 특정한 영역을 임계 영역으로 지정
+synchronized(객체의 참조변수) { ... }
+```
+
+첫 방법은 메서드 앞에 synchronized를 붙이는 것인데, synchronized를 붙이면 메서드 전체가 임계 영역으로 설정된다.    
+쓰레드는 synchronized메서드가 호출된 시점부터 해당 메서드가 포함된 객체의 lock을 얻어    
+작업을 수행하다가 메서드가 종료되면 lock을 반환한다.    
+두 번째 방법은 메서드 내의 코드 일부를 블럭{}으로 감싸고 블럭 앞에 synchronized(참조변수)를 붙이는 것인데,    
+이때 참조변수는 락을 걸고자하는 객체를 참조하는 것이어야 한다.   
+이 블럭을 synchronized블럭이라고 부르며, 이 블럭의 영역 안으로 들어가면서부터    
+쓰레드는 지정된 객체의 lock을 얻게 되고, 이 블럭을 벗어나면 lock을 반납한다.     
+두 방법 모두 lock의 획득과 반납이 자동으로 이루어지므로 임계 영역만 설정해주면 된다.      
+모든 객체는 lock을 하나씩 가지고 있으며, 해당 객체의 lock을 가지고 있는 쓰레드만 임계 영역의 코드를 수행할 수 있다.    
+그리고 다른 쓰레드들은 lock을 얻을 떄까지 기다리게 된다.     
+임계 영역은 멀티쓰레드 프로그램의 성능을 좌우하기 때문에 가능하면ㄴ 메서드 전체에 락을 거는 것보다    
+synchronized블럭으로 임계 영역을 최소화해서 보다 효율적인 프로그램이 되도록 노력해야 한다.
+
+```java
+public class ThreadEx21 {
+
+	public static void main(String[] args) {
+		Runnable r = new RunnableEx21();
+		new Thread(r).start();//ThreadGroup에 의해 참조되므로 gc대상이 아니다.
+		new Thread(r).start();//ThreadGroup에 의해 참조되므로 gc대상이 아니다.
+	}
+}
+
+class Account{
+	private int balance = 1000;
+	public int getBalance() {
+		return this.balance;
+	}
+	public void withdraw(int money) {
+		if(balance>=money) {
+			try {Thread.sleep(1000);}catch(InterruptedException e) {}
+			balance -= money;
+		}
+	}
+}
+
+class RunnableEx21 implements Runnable{
+	Account acc = new Account();
+	
+	public void run() {
+		while(acc.getBalance()>0) {
+			//100, 200, 300 중의 한 값을 임의로 선택해서 출금withdraw
+			int money = (int)(Math.random()*3+1) * 100;
+			acc.withdraw(money);
+			System.out.println("balance: "+acc.getBalance());
+		}
+	}
+}
+```
+
+계좌account에서 잔고balance를 확인하고 임의의 금액을 출금withdraw하는 예제이다.     
+코드는 잔고가 출금하려는 금액보다 큰 경우에만 출금하도록 되어 있으나 실행결과를 보면 잔고가 음수이다.    
+한 쓰레드가 if문의 조건식을 통화하고 출금하기 바로 직전에 다른 쓰레드가 끼어들어서 출금을 먼저 했기 때문이다.    
+그러므로 잔고를 확인하는 if문과 출금하는 문장은 하나의 임계 영역으로 묶여져야 한다.    
+
+
+아래와 같이 withdraw메서드에 synchronized키워드를 붙이기만 하면 간단히 동기화가 된다.
+
+```java
+public synchronized void withdraw(int money) { ... }
+```
+한 쓰레드에 의해 먼저 withdraw()가 호출되면, 이 메서드가 종료되어 lock이 반납될때까지      
+다른 쓰레드는 withdraw()를 호출하더라도 대기상태에 머물게 된다.     
+메서드 앞에 synchronized를 붙이는 대신, synchronized블럭을 사용하면 다음과 같다.    
+
+```java
+public void withdraw() {
+	synchronized(this) {
+		if(balance>=money) {
+			try{Thread.sleep(1000);}catch(InterruptedException e){}
+			balance -= money;
+		}
+	}
+}
+```
+이 경우에는 둘 중의 어느 쪽을 선택해도 같으니까 synchronized메서드로 하는 것이 낫다.    
+
+```java
+public class ThreadEx22 {
+
+	public static void main(String[] args) {
+		Runnable r = new RunnableEx21();
+		new Thread(r).start();//ThreadGroup에 의해 참조되므로 gc대상이 아니다.
+		new Thread(r).start();//ThreadGroup에 의해 참조되므로 gc대상이 아니다.
+	}
+}
+
+class Account{
+	private int balance = 1000;
+	public int getBalance() {
+		return this.balance;
+	}
+	public synchronized void withdraw(int money) {
+		if(balance>=money) {
+			try {Thread.sleep(1000);}catch(InterruptedException e) {}
+			balance -= money;
+		}
+	}
+}
+
+class RunnableEx21 implements Runnable{
+	Account acc = new Account();
+	
+	public void run() {
+		while(acc.getBalance()>0) {
+			//100, 200, 300 중의 한 값을 임의로 선택해서 출금withdraw
+			int money = (int)(Math.random()*3+1) * 100;
+			acc.withdraw(money);
+			System.out.println("balance: "+acc.getBalance());
+		}
+	}
+}
+```
+Account클래스의 인스턴스변수인 balance의 접근 제어자가 private이라는 것에 주의하여야 한다.    
+만일 private이 아니면, 외부에서 직접 접근할 수 있기 때문에 아무리 동기화를 해도 이 값의 변경을 막을 수 없다.     
+synchronized를 이용한 동기화는 지정된 영역의 코드를 한 번에 하나의 쓰레드가 수행하는 것을 보장하는 것일 뿐이기 때문이다.
+
