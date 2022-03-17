@@ -1471,4 +1471,320 @@ class RunnableEx21 implements Runnable{
 Account클래스의 인스턴스변수인 balance의 접근 제어자가 private이라는 것에 주의하여야 한다.    
 만일 private이 아니면, 외부에서 직접 접근할 수 있기 때문에 아무리 동기화를 해도 이 값의 변경을 막을 수 없다.     
 synchronized를 이용한 동기화는 지정된 영역의 코드를 한 번에 하나의 쓰레드가 수행하는 것을 보장하는 것일 뿐이기 때문이다.
+## wait()와 notify()
+synchronized로 동기화해서 공유 데이터를 보호하는 것 까지는 좋은데,   
+특정 쓰레드가 객체의 락을 가진 상태로 오랜 시간을 보내지 않도록 하는 것도 중요하다.     
+이러한 상황을 개선하기 위해 고안된 것이 바로 wait()과 notify()이다.     
+동기화된 임계 영역의 코드를 수행하다가 작업을 더 이상 진행할 상황이 아니면,     
+일단 wait()을 호출하여 쓰레드가 락을 반납하고 기다리게 한다.     
+그러면 다른 쓰레드가 락을 얻어 해당 객체에 대한 작업을 수행할 수 있게 된다.     
+나중에 작업을 진행할 수 있는 상황이 되면 notify()를 호출해서, 작업을 중단했던 쓰레드가 다시 락을 얻어 작업을 진행하게 된다.     
 
+
+다만, 오래 기다린 쓰레드가 락을 얻는다는 보장은 없다.     
+wait()이 호출되면, 실행 중이던 쓰레드는 해당 객체의 대기실에서 통지를 기다린다.    
+notify()가 호출되면, 해당 객체의 대기실에 있던 모든 쓰레드 중에서 임의의 쓰레드만 통지를 받는다.     
+notifyAll()은 기다리고 있는 모든 쓰레드에게 통보를 하지만, 그래도 Lock을 얻는 쓰레드는 하나뿐이다.    
+나머지 쓰레드는 통보를 받긴 했지만, lock을 얻지 못하면 다시 lock을 기다리는 신세가 된다.     
+wait()과 notify()는 특정 객체에 대한 것이므로 Object클래스에 정의되어있다.
+
+```java
+void wait()
+void wait(long timeout)
+void wait(long timeout, int nanos)
+void notify()
+void notifyAll()
+```
+
+wait()은 notify()나 notifyAll()이 호출될 때까지 기다리지만, 매개변수가 있는 wait()은 지정된 시간동안만 기다린다.     
+즉, 지정된 시간이 지난 후에 자동적으로 notify()가 호출된다.     
+그리고 waiting pool은 객체마다 존재하는 것이므로 notifyAll()이 호출된다고 모든 객체의 waiting pool에 있는 쓰레드가 깨워지는 것은 아니다.    
+notifyAll()이 호출된 객체의 waiting pool에 대기 중인 쓰레드만 해당된다.
+
+#### wait(), notify(), notifyAll()
+> Object에 정의되어 있다.     
+> 동기화 블록Synchronized블록 내에서만 사용할 수 있다.    
+> 보다 효율적인 동기화를 가능하게 한다.
+
+다음 예제는 식당에서 음식을 만들어서 테이블에 추가하는 요리사와 테이블의 음식을 소비하는 손님을 쓰레드로 구현했다.   
+
+```java
+public class ThreadWaitEx1 {
+
+	public static void main(String[] args) throws Exception{
+		Table table = new Table();	//여러 쓰레드가 공유하는 객체
+		
+		new Thread(new Cook(table), "COOK1").start();
+		new Thread(new Customer(table, "donut"), "CUST1").start();
+		new Thread(new Customer(table, "burger"), "CUST2").start();
+		
+		//0.1초 후에 강제 종료시킨다.
+		Thread.sleep(100);	
+		System.exit(0);
+	}
+}
+class Customer implements Runnable	{
+	private Table table;
+	private String food;
+	
+	Customer (Table table, String food){
+		this.table = table;
+		this.food = food;
+	}
+	public void run() {
+		while(true) {
+			try {Thread.sleep(10);}catch(InterruptedException e) {}
+			String name = Thread.currentThread().getName();
+			
+			if(eatFood())
+				System.out.println(name + " ate a " + food);
+			else
+				System.out.println(name + " faild to eat. :( ");
+		}
+	}
+	public boolean eatFood() {return table.remove(food);}
+}
+class Cook implements Runnable	{
+	private Table table;
+	
+	Cook(Table table){this.table = table;}
+	
+	public void run() {
+		while(true) {
+			//임의의 요리를 하나 선택해서 table에 추가한다.
+			int idx = (int)(Math.random()*table.dishNum());
+			table.add(table.dishNames[idx]);
+			
+			try {Thread.sleep(1);}catch(InterruptedException e) {}
+		}
+	}
+}
+class Table{
+	String[] dishNames = {"donut", "donut", "burger"};//donut이 더 자주 나온다.
+	final int MAX_FOOD = 6;//테이블에 놓을 수 있는 최대 음식의 개수
+	
+	private ArrayList<String> dishes = new ArrayList<>();
+	
+	public void add(String dish) {
+		//테이블에 음식이 가득찼으면, 테이블에 음식을 추가하지 않는다.
+		if(dishes.size()>=MAX_FOOD)
+			return;
+		dishes.add(dish);
+		System.out.println("Dishes: " + dishes.toString());
+	}
+	public boolean remove(String dishName) {
+		//지정된 요리와 일치하는 요리를 테이블에서 제거한다.
+		for(int i = 0; i<dishes.size(); i++)
+			if(dishName.equals(dishes.get(i))) {
+				dishes.remove(i);
+				return true;		
+			}
+		
+		return false;
+	}
+	public int dishNum() {return dishNames.length;}
+}
+```
+반복해서 실행하면 2가지 종류의 예외를 볼 수 있다.    
+요리사Cook 쓰레드가 테이블에 음식을 놓는 도중에,       
+손님Customer 쓰레드가 음식을 가져가려했기 때문에 발생하는 예외ConcurrentModigicationException와      
+손님 쓰레드가 테이블의 마지막 남은 음식을 가져가는 도중에 다른 손님 쓰레드가 먼저 음식을 낚아채버려서      
+있지도 않은 음식을 테이블에서 제거하려했기 때문에 발생하는 예외IndexOutOfBoundsException 이다.     
+이런 예외들이 발생하는 이유는 여러 쓰레드가 테이블을 공유하는데도 동기화를 하지 않았기 떄문이다.    
+이제 이 예제에 동기화를 추가해서 예외가 발생하지 않도록 하자.
+
+```java
+public class ThreadWaitEx1 {
+
+	public static void main(String[] args) throws Exception{
+		Table table = new Table();	//여러 쓰레드가 공유하는 객체
+		
+		new Thread(new Cook(table), "COOK1").start();
+		new Thread(new Customer(table, "donut"), "CUST1").start();
+		new Thread(new Customer(table, "burger"), "CUST2").start();
+		
+		//0.1초 후에 강제 종료시킨다.
+		Thread.sleep(5000);	
+		System.exit(0);
+	}
+}
+class Customer implements Runnable	{
+	private Table table;
+	private String food;
+	
+	Customer (Table table, String food){
+		this.table = table;
+		this.food = food;
+	}
+	public void run() {
+		while(true) {
+			try {Thread.sleep(10);}catch(InterruptedException e) {}
+			String name = Thread.currentThread().getName();
+			
+			if(eatFood())
+				System.out.println(name + " ate a " + food);
+			else
+				System.out.println(name + " faild to eat. :( ");
+		}
+	}
+	public boolean eatFood() {return table.remove(food);}
+}
+class Cook implements Runnable	{
+	private Table table;
+	
+	Cook(Table table){this.table = table;}
+	
+	public void run() {
+		while(true) {
+			//임의의 요리를 하나 선택해서 table에 추가한다.
+			int idx = (int)(Math.random()*table.dishNum());
+			table.add(table.dishNames[idx]);
+			try {Thread.sleep(100);}catch(InterruptedException e) {}
+		}
+	}
+}
+class Table{
+	String[] dishNames = {"donut", "donut", "burger"};//donut이 더 자주 나온다.
+	final int MAX_FOOD = 6;//테이블에 놓을 수 있는 최대 음식의 개수
+	
+	private ArrayList<String> dishes = new ArrayList<>();
+	
+	public synchronized void add(String dish) {
+		//테이블에 음식이 가득찼으면, 테이블에 음식을 추가하지 않는다.
+		if(dishes.size()>=MAX_FOOD)
+			return;
+		dishes.add(dish);
+		System.out.println("Dishes: " + dishes.toString());
+	}
+	public boolean remove(String dishName) {
+		synchronized(this) {
+			while(dishes.size() == 0) {
+				String name = Thread.currentThread().getName();
+				System.out.println(name + " is waiting. ");
+				try {Thread.sleep(500);}catch(InterruptedException e) {}
+			}
+			for(int i = 0; i<dishes.size(); i++)
+				if(dishName.equals(dishes.get(i))) {
+					dishes.remove(i);
+					return true;
+				}
+			}
+			return false;
+		}
+	public int dishNum() {return dishNames.length;}
+}
+```
+여러 쓰레드가 공유하는 개체인 테이블Table의 add()와 remove()를 동기화하였다.     
+더 이상 전과 같은 예외는 발생하지 않지만, 요리사 쓰레드가 요리를 추가하지않아 원활히 진행되지도 않는다.    
+그 이유는 손님 쓰레드가 테이블 객체의 lock을 쥐고 기다리기 때문이다.     
+요리사 쓰레드가 음식을 새로 추가하려해도 테이블 객체의 lock을 얻을 수 없어서 불가능하다.     
+이럴 때 사용하는 것이 wait() & notify() 이다.    
+손님 쓰레드가 lock을 쥐고 기다리는 게 아니라, wait()으로 lock을 풀고 기다리다가 음식이 추가되면     
+notify()로 통보를 받고 다시 lock을 얻어서 나머지 작업을 진행하게 할 수 있다.     
+다음 예제는 위 예제에 wait()과 notify()를 추가한 것이다.    
+
+```java
+public class ThreadWaitEx1 {
+
+	public static void main(String[] args) throws Exception{
+		Table table = new Table();	//여러 쓰레드가 공유하는 객체
+		
+		new Thread(new Cook(table), "COOK1").start();
+		new Thread(new Customer(table, "donut"), "CUST1").start();
+		new Thread(new Customer(table, "burger"), "CUST2").start();
+		
+		Thread.sleep(2000);	
+		System.exit(0);
+	}
+}
+class Customer implements Runnable	{
+	private Table table;
+	private String food;
+	
+	Customer (Table table, String food){
+		this.table = table;
+		this.food = food;
+	}
+	public void run() {
+		while(true) {
+			try {Thread.sleep(100);}catch(InterruptedException e) {}
+			String name = Thread.currentThread().getName();
+			
+			table.remove(food);
+			System.out.println(name+ " ate a "+food);
+		}
+	}
+}
+class Cook implements Runnable	{
+	private Table table;
+	
+	Cook(Table table){this.table = table;}
+	
+	public void run() {
+		while(true) {
+			//임의의 요리를 하나 선택해서 table에 추가한다.
+			int idx = (int)(Math.random()*table.dishNum());
+			table.add(table.dishNames[idx]);
+			try {Thread.sleep(10);}catch(InterruptedException e) {}
+		}
+	}
+}
+class Table{
+	String[] dishNames = {"donut", "donut", "burger"};//donut이 더 자주 나온다.
+	final int MAX_FOOD = 6;//테이블에 놓을 수 있는 최대 음식의 개수
+	
+	private ArrayList<String> dishes = new ArrayList<>();
+	
+	public synchronized void add(String dish) {
+		while(dishes.size()>=MAX_FOOD) {
+			String name = Thread.currentThread().getName();
+			System.out.println(name+" is waiting. ");
+			try {
+				wait();	//cook쓰레드를 기다리게 한다.
+				Thread.sleep(500);
+			} catch (InterruptedException e) {}
+		}
+		dishes.add(dish);
+		notify();	//기다리고 있는 CUST를 깨우기 위함
+		System.out.println("Dish: "+dishes.toString());
+	}
+	public void remove(String dishName) {
+		synchronized(this) {
+			String name = Thread.currentThread().getName();
+			
+			while(dishes.size() == 0) {
+				System.out.println(name + " is waiting. ");
+				try {
+					wait();	//CUST를 기다리게 한다.
+					Thread.sleep(500);
+				}catch(InterruptedException e) {}
+			}
+			while(true) {
+				for(int i = 0; i<dishes.size(); i++) {
+					if(dishName.equals(dishes.get(i))) {
+						dishes.remove(i);
+						notify();	//잠자고 있는 COOK을 깨우기 위함
+						return;
+					}
+				}
+				try {
+					System.out.println(name + " is waiting. ");
+					wait();	//원하는 음식이 없는 CUST쓰레드를 기다리게 한다.
+					Thread.sleep(500);
+				}catch(InterruptedException e) {}
+			}
+		}
+	}
+	public int dishNum() {return dishNames.length;}
+}
+```
+이전 예제에 wait()과 notify()를 추가하고 테이블에 음식이 없을 때뿐만 아니라 원하는 음식이 없을 때도 손님이 기다리도록 바꾸었다.     
+이제 남은 문제는 waiting pool에 요리사와 손님이 함께 대기한다는 것이다.   
+그래서 notify()가 호출되었을 때 누가 통지를 받을지 알 수 없다.    
+손님 쓰레드가 통지를 받아 lock을 얻어도 원하는 음식이 없어 다시 waiting pool에 들어가 비효율을 만들 수 있다.
+
+#### 기아 현상과 경쟁 상태
+운이 나쁘면 요리사 쓰레드는 계속 통지를 받지 못하고 오랫동안 기다리게 되는데 이를 '기아현상'이라고 한다.   
+이 현상을 막으려면 notify()대신 notifyAll()을 사용해야 한다.    
+일단 모든 쓰레드에게 통지를 하면, 손님 쓰레드는 다시 waiting pool에 들어가더라도 요리사 쓰레드는      
+결국 lock을 얻어서 작업을 진행할 수 있기 때문이다.
