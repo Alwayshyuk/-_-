@@ -2060,3 +2060,251 @@ class Table{
 그래도 쓰레드의 종류에 따라 구분하여 통지를 할 수 있게 된 것일 뿐,     
 여전히 특정 쓰레드를 선택할 수 없기 때문에 같은 종류의 쓰레드간의 기아 현상이나 경쟁 상태가 발생할 가능성은 남아있다.    
 손님이 원하는 음식의 종류별로 Condition을 더 세분화하면 통지를 받고도 원하는 음식이 없어서 다시 기다리는 일이 없도록 할 수 있다.
+
+## volatile
+
+코어는 메모리에서 읽어온 값을 캐시에 저장하고 캐시에서 값을 읽어서 작업한다.    
+다시 같은 값을 읽어올 때는 먼저 캐시에 있는지 확인하고 없을 때만 메모리에서 읽어온다.    
+그러다보니 도중에 메모리에 저장된 변수의 값이 변경되었는데도 캐시에 저장된 값이 갱신되지 않아서 메모리에 저장된 값이 다른 경우가 발생한다.     
+그래서 변수 stopped의 값이 바뀌었는데도 쓰레드가 멈추지 않고 계속 실행되는 것이다.        
+> ThreadEx16 예제에서 멀티 코어 프로세서의 경우 그러하다.   
+
+```java
+boolean suspended = false;
+boolean stopped = false;
+//>>>>>>>>>>>>
+volatile boolean suspended = false;
+volatile boolean stopped = false;
+```
+
+그러나 위와 같이 변수 앞에 volatile을 붙이면, 코어가 변수의 값을 읽어올 때      
+캐시가 아닌 메모리에서 읽어오기 때문에 캐시와 메모리간의 값의 불일치가 해결된다.    
+변수에 volatile을 붙이는 대신에 synchronized블럭을 사용해도 같은 효과를 얻을 수 있다.     
+쓰레드가 synchronized블럭으로 들어갈 때와 나올 때, 캐시와 메모리간의 동기화가 이루어지기 때문에 값의 불일치가 해소되기 때문이다.     
+
+#### volatile로 long과 double을 원자화
+JVM은 데이터를 4byte단위로 처리하기 때문에, int와 int보다 작은 타입들은 한 번에 읽거나 쓰는 것이 가능하다.    
+즉, 단 하나의 명령어로 읽거나 쓰기가 가능하다는 뜻이다.     
+하나의 명령어는 더 이상 나눌 수 없는 최소의 작업단위이므로, 작업의 중간에 다른 쓰레드가 끼어들 틈이 없다.     
+그러나, 크기가 8byte인 long과 double타입의 변수는 하나의 명령어로 값을 읽거나 쓸 수 없기 때문에,     
+변수의 값을 읽는 과정에 다른 쓰레드가 끼어들 여지가 있다. 다른 쓰레드가 끼어들지 못하게 하려고 변수를 읽고 쓰는 모든 문장을     
+synchronized블럭으로 감쌀 수도 있지만, 더 간단한 방법이 있다. 변수를 선언할 떄 volatile을 붙이는 것이다.    
+> 상수에는 volatile을 붙일 수 없다. 즉, 변수에 final과 volatile을 같이 붙일 수 없다.     
+> 사실 상수는 변하지 않는 값이므로 멀티쓰레드에 안전하다. 그래서 volatile을 붙일 필요가 없다.     
+
+```java
+volatile long sharedVal;
+//long타입의 변수를 원자화
+volatile double shareVal;
+//double타입의 변수를 원자화
+```
+
+volatile은 해당 변수에 대한 읽거나 쓰기가 원자화된다. 원자화라는 것은 작업을 더 이상 나눌 수 없게 한다는 의미인데,     
+synchronized블럭도 일종의 원자화라고 할 수 있다.      
+즉, synchronized블럭은 여러 문장을 원자화함으로써 쓰레드의  동기화를 구현한 것이라고 보면 된다.      
+volatile은 변수의 읽거나 쓰기를 원자화 할 뿐, 동기화하는 것은 아니라는 점에 주의하자.     
+동기화가 필요할 때 synchronized블럭 대신 volatile을 쓸 수 없다.     
+
+```java
+volatile long balance;	//인스턴스 변수 balance를 원자화 한다.
+
+synchronized int getBalance(){	//balance의 값을 반환한다.
+	return balance;
+}
+
+synchronized void withdraw(int money) {	//balance의 값을 변경
+	if(balance>=money) {
+		balance -= money;
+	}
+}
+```
+
+위와 같은 코드가 있을 때, 인스턴스변수 balance를 volatile로 원자화했으니까,       
+이 값을 읽어서 반환하는 메서드 getBalance()를 동기화 할 필요가 없다고 생각할 수 있다.    
+그러나 getBalance()를 synchronized로 동기화하지 않으면,      
+withdraw()가 호출되어 객체에 lock을 걸고 작업을 수행하는 중인데도 getBalance()가 호출되는 것이 가능하다.     
+출금이 진행 중일 때는 기다렸다가 출금이 끝난 후에 잔고를 조회할 수 있도록 하려면 getBalance()에 synchronized를 붙여서 동기화해야 한다.     
+
+## fork & join 프레임웍
+fork & join 프레임웍은 하나의 작업을 작은 단위로 나눠서 여러 쓰레드가 동시에 처리하는 것을 쉽게 만들어 준다.     
+먼저 수행할 작업에 따라 RecursiveAction과 RecursiveTask, 두 클래스 중에서 하나를 상속받아 구현해야한다.      
+> RecursiveAction : 반환값이 없는 작업을 구현할 때 사용        
+> RecursiveTask : 반환값이 있는 작업을 구현할 때 사용          
+
+두 클래스 모두 compute()라는 추상 메서드를 가지고 있는데, 우리는 상속을 통해 이 추상 메서드를 구현하기만 하면 된다.     
+
+```java
+public abstract class RecursiveAction extends ForkJoinTask<void> {
+	...
+	protected abstract void compute();	//상속을 통해 이 메서드를 구현해야 한다.
+	...
+}
+public abstract class RecursiveTask<V> extends ForkJoinTask<V> {
+	...
+	V result;
+	pritected abstract V compute();		//상속을 통해 이 메서드를 구현해야 한다.
+	...
+}
+```
+
+예를 들어 1부터 n까지의 합을 계산한 결과를 돌려주는 작업의 구현은 다음과 같이 한다.     
+
+```java
+class SumTask extends RecursiveTask<Long> {	//RecursiveTask를 상속받는다.
+	long from, to;
+	
+	SumTask(long from, long to) {
+		thisl.from = from;
+		this.to = to;
+	}
+	public Long compute() {
+		//처리할 작업을 수행하기 위한 문장을 넣는다.
+	}
+}
+```
+그 다음에는 쓰레드풀과 수행할 작업을 생성하고, invoke()로 작업을 시작한다.     
+쓰레드를 시작할 때 run()이 아니라 start()를 호출하는 것처럼, fork&join프레임웍으로 수행할 작업도 compute()가 아닌 invoke()로 시작한다.    
+
+```java
+ForkJoinPool pool = new ForkJoinPool();	//쓰레드 풀을 생성
+SumTask task = new SumTask(from, to);	//수행할 작업을 생성
+
+Long result = pool.invoke(task);		//invoke()를 호출해서 작업 시작
+```
+
+ForkJoinPool은 fork&join프레임웍에서 제공하는 쓰레드 풀thread pool로,      
+지정된 수의 쓰레드를 생성해서 미리 만들어 놓고 반복해서 재사용할 수 있게 한다.    
+그리고 쓰레드를 반복해서 생성하지 않아도 된다는 장점과 너무 많은 쓰레드가 생성되어 성능이 저하되는 것을 막아준다는 장점이 있다.      
+쓰레드 풀은 쓰레드가 수행해야하는 작업이 담긴 큐를 제공하며, 각 쓰레드는 자신의 작업 큐에 담긴 작업을 순서대로 처리한다.     
+> 쓰레드 풀은 기본적으로 코어의 개수와 동일한 개수의 쓰레드를 생성한다.     
+
+#### compute()의 구현
+compute()를 구현할 때는 수행할 작업 외에도 작업을 어떻게 나눌 것인가에 대해서도 알려줘야 한다.
+
+```java
+public Long compute() {
+	long size = to-from+1;	//from <= i <= to
+	
+	if(size < 5)	//더할 숫자가 5개 이하면
+		return sum();		//숫자의 합을 반환. sum()은 from부터 to까지의 수를 더해서 반환
+	
+	//범위를 반으로 나눠서 두 개의 작업을 생성
+	long half = (from+to)/2;
+	
+	SumTask leftSum = new SumTask(from, half);
+	SumTask rightSum = new SumTack(half+1, to);
+	
+	leftSum.fork();	//작업leftSum을 작업 큐에 넣는다.
+	
+	return rightSum.compute() + leftSum.join();
+}
+```
+
+실제 수행할 작업은 sum()뿐이고 나머지는 수행할 작업의 범위를 반으로 나눠서 새로운 작업을 생성해서 실행시키기 위한 것이다.     
+복잡해 보이지만, 작업의 범위를 어떻게 나눌 것인지만 정의해 주면 나머지는 항상 같은 패턴이다.      
+
+> compute()의 구조는 일반적인 재귀호출 메서드와 동일하다.     
+
+#### 다른 쓰레드의 작업 훔쳐오기
+fork()가 호출되어 작업 큐에 추가된 작업 역시, compute()에 의해 더 이상 나눌 수 없을때까지 반복해서 나뉘고,     
+자신의 작업 큐가 비어있는 쓰레드는 다른 쓰레드의 작업 큐에서 작업을 가져와서 수행한다.     
+이것을 작업 훔쳐오기work stealing라고 하며, 이 과정은 모두 쓰레드풀에 의해 자동적으로 수행된다.    
+> 작업의 크기를 충분히 작게 해야 각 쓰레드가 골고루 작업을 나눠가질 수 있다.    
+
+#### fork()와 join()
+fork()는 작업을 쓰레드의 작업 큐에 넣는 것이고, 작업 큐에 들어간 작업은 더 이상 나눌 수 없을 때까지 나뉜다.    
+즉, compute()로 나누고 fork()로 작업 큐에 넣는 작업이 계속해서 반복된다.     
+그리고 나눠진 작업은 각 쓰레드가 골고루 나눠서 처리하고, 작업의 결과는 join()을 호출해서 얻을 수 있다.     
+fork()와 join()의 중요한 차이점은 fork()는 비동기 메서드asynchronized method이고 join()은 동기 메서드synchronized method라는 것이다.     
+> fork() : 해당 작업을 쓰레드 풀의 작업 큐에 넣는다. 비동기 메서드          
+> join() : 해당 작업의 수행이 끝날 때까지 기다렸다가, 수행이 끝나면 그 결과를 반환한다. 동기 메서드          
+
+비동기 메서드는 일반적인 메서드와 달리 메서드를 호출만 할 뿐, 그 결과를 기다리지 않는다.     
+(내부적으로는 다른 쓰레드에게 작업을 수행하도록 지시만 하고 결과를 기다리지 않고 돌아오는 것이다.)      
+그래서 아래의 코드에서, fork()를 호출하면 결과를 기다리지 않고 다음 문장인 return문으로 넘어간다.      
+return문에서 compute()가 재귀호출될 때, join()은 호출되지 않는다.     
+그러다가 작업을 더 이상 나눌 수 없게 되었을 때, compute()의 재귀호출은 끝나고 join()의 결과를 기다렸다가 더해서 결과를 반환한다.     
+재귀호출된 compute()가 모두 종료될 때, 최종 결과를 얻는다.     
+
+```java
+public long compute() {
+	...
+	SumTask leftSum = new SumTask(from, half);
+	SumTask rightSum = new SumTask(half+1, to);
+	leftSum.fork();	//비동기 메서드. 호출 후 결과를 기다리지 않는다.
+	
+	return rightSum.compute() + leftSum.join();	//동기 메서드. 호출결과를 기다린다.
+}
+```
+
+```java
+public class ForkJoinEx1 {
+
+	static final ForkJoinPool pool = new ForkJoinPool();	//쓰레드 풀을 생성
+	
+	public static void main(String[] args) {
+		long from = 1L, to = 100_000_000L;
+		
+		SumTask task = new SumTask(from, to);
+		long start = System.currentTimeMillis();
+		long result = pool.invoke(task);
+		System.out.println("Elapsed time(4 core) : " + (System.currentTimeMillis()-start));
+		
+		System.out.printf("sum of %d~%d = %d%n",from,to,result);
+		System.out.println();
+		
+		result = 0L;
+		start= System.currentTimeMillis();
+		
+		for(int i = 0; i<=to; i++)
+			result+=i;
+		
+		System.out.println("Elapsed time(1 core): " + (System.currentTimeMillis()-start));
+		System.out.printf("sum of %d~%d = %d%n",from,to,result);
+	}
+}
+class SumTask extends RecursiveTask<Long>	{
+	long from, to;
+	
+	SumTask(long from, long to){
+		this.from = from;
+		this.to = to;
+	}
+	
+	public Long compute() {
+		long size = to-from+1;
+		
+		if(size<=5)
+			return sum();
+		
+		long half = (from+to)/2;
+		
+		SumTask leftSum = new SumTask(from, half);
+		SumTask rightSum = new SumTask(half+1, to);
+		
+		leftSum.fork();
+		
+		return rightSum.compute() + leftSum.join();
+	}
+	
+	long sum() {
+		
+		long tmp = 0L;
+		
+		for(long i = from; i<=to ; i++)
+			tmp += i;
+
+		return tmp;
+	}
+}
+
+Elapsed time(4 core) : 715
+sum of 1~100000000 = 5000000050000000
+
+Elapsed time(1 core): 115
+sum of 1~100000000 = 5000000050000000
+```
+실행결과를 보면, fork&join프레임웍으로 계산한 결과보다 for문으로 계산한 결과가 시간이 덜 걸린 것을 알 수 있다.    
+왜냐하면, 작업을 나누고 다시 합치는데 걸리는 시간이 있기 때문이다.    
+재귀호출보다 for문이 더 빠른 것과 같은 이유인데, 항상 멀티쓰레드로 처리하는 것이 빠르다고 생각해서는 안 된다.    
+반드시 테스트해보고 이득이 있을 때만, 멀티쓰레드로 처리해야 한다.   
