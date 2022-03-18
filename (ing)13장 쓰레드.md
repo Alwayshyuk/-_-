@@ -1788,3 +1788,275 @@ class Table{
 이 현상을 막으려면 notify()대신 notifyAll()을 사용해야 한다.    
 일단 모든 쓰레드에게 통지를 하면, 손님 쓰레드는 다시 waiting pool에 들어가더라도 요리사 쓰레드는      
 결국 lock을 얻어서 작업을 진행할 수 있기 때문이다.
+
+## Lock과 Condition을 이용한 동기화
+
+동기화할 수 있는 방법은 synchronized블럭 외에도 java.util.concurrent.locks패키지가 제공하는 lock클래스들을 이용하는 방법이 있다.     
+synchronized블럭으로 동기화하면 자동으로 lock이 잠기고 풀리고, 블럭 내에서 예외가 발생해도 lock은 자동으로 풀린다.    
+그러나 같은 메서드내에서만 lock을 걸 수 있다는 제약이 있어 그럴 때 lock클래스를 사용한다.
+
+> ReentrantLock : 재진입이 가능한 lock. 가장 일반적인 배타 lock        
+> ReentrantReadWriteLock : 읽기에는 공유적이고, 쓰기에는 배타적인 lock     
+> StamptedLock : ReentrantReadWriteLock에 낙관적인 lock의 기능을 추가    
+
+ReentrantLock은 가장 일반적인 lock이다.     
+reentrant(재진입할 수 있는)이라는 단어가 앞에 붙은 이유는 우리가 앞서 wait() & notify()를 배운 것처럼,      
+특정 조건에서 lock을 풀고 나중에 다시 lock을 얻고 임계영역으로 들어와서 이후의 작업을 수행할 수 있기 떄문이다.     
+ReentrantReadWriteLock은 읽기를 위한 lock과 쓰기를 위한 lock을 제공한다.     
+ReentrantLock은 배타적인 lock이라서 무조건 lock이 있어야만 임계영역의 코드를 수행할 수 있지만,     
+ReentrantReadWriteLock은 읽기 lock이 걸려있으면, 다른 쓰레드가 읽기 lock을 중복해서 걸고 읽기를 수행할 수 있다.     
+읽기는 내용을 변경하지 않으므로 동기에 여러 쓰레드가 읽어도 문제가 되지 않는다.     
+그러나 읽기 lock이 걸린 상태에서 쓰기 lock을 거는 것은 허용되지 않는다. 반대의 경우도 마찬가지다.     
+
+
+StampedLock은 lock을 걸거나 해지할 떄 스탬프(long타입의 정수값)를 사용하며,     
+읽기와 쓰기를 위한 lock외에 낙관적 읽기 lock(optimistic reading lock)이 추가된 것이다.      
+읽기 lock이 걸려있으면, 쓰기 lock을 얻기 위해서는 읽기 lock이 풀릴 때까지 기다려야하는데 비해    
+낙관적 읽기 lock은 쓰기 lock에 의해 바로 풀린다. 그래서 낙관적 읽기에 실패하면 읽기 lock을 얻어서 다시 읽어 와야 한다.    
+* 무조건 읽기 lock을 걸지 않고, 쓰기와 읽기가 충돌할 때만 쓰기가 끝난 후에 읽기 lock을 거는 것이다.     
+다음의 코드는 가장 일반적인 StampedLock을 이용한 낙관적 읽기의 예이다.    
+
+```java
+int getBalance(){
+	long stamp = lock.tryOptimisticRead();	//낙관적 읽기 lock을 건다.
+	
+	int curBalance = this.balance;	//공유 데이터인 balance를 읽어온다.
+	
+	if(!lock.validate(stamp)){	//쓰기 lock에 의해 낙관적 읽기 lock이 풀렸는지 확인
+		stamp = lock.readLock();	//lock이 풀렸으면, 읽기 lock을 얻으려고 기다린다.
+		
+		try{
+			curBalance = this.balance;	// 공유 데이터를 다시 읽어온다.
+		} finally {
+			lock.unlockRead(stamp);	//읽기 lock을 푼다.
+		}
+	}
+	return curBalance;	//낙관적 읽기 lock이 풀리지 않았으면 곧바로 읽어온 값을 반환
+}
+```
+
+#### ReentrantLock의 생성자
+
+> ReentrantLock()     
+> ReentrantLock(boolean fair)     
+
+생성자의 매개변수를 true로 주면, lock이 풀렸을 때 가장 오래 기다린 쓰레드가 lock을 획득할 수 있게 공정하게 처리한다.    
+그러나 공정하게 처리하려면 어떤 쓰레드가 가장 오래 기다렸는지 확인하는 과정을 거쳐야하므로 성능은 떨어진다.     
+대부분의 경우 굳이 공정하게 처리하지 않아도 문제가 되지 않으므로 공정함보다 성능을 선택한다.     
+
+> void lock() : lock을 잠근다.      
+> void unlock() : lock을 해지한다.     
+> boolean isLocked() : lock이 잠겼는지 확인한다.     
+
+자동으로 lock의 잠금과 해제가 관리되는 synchronized블럭과 달리,       
+ReentrantLock과 같은 lock클래스들은 수동으로 lock을 잠그고 해제해야 된다.	      
+
+```java
+synchronized(lock) {  //임계 영역  }
+//>>>>>>>>
+lock.lock();
+//임계 영역
+lock.unlock();
+```
+임계 영역 내에서 예외가 발생하거나 return문으로 빠져 나가게 되면 lock이 풀리지 않을 수 있으므로      
+unlock()은 try-finally문으로 감싸는 것이 일반적이다.      
+
+```java
+//참조변수 lock은 ReentrantLock객체를 참조한다고 가정하였다.
+lock.lock();	//Reentrant lock = new ReentrantLock();
+try {
+	//임계 영역
+} finally {
+	lock.unlock();
+}
+```
+
+이렇게 하면, try블럭 내에서 어떤 일이 발생해도 finally블럭에 있는 unlock()이 수행되어 lock이 풀리지 않는 일은 발생하지 않는다.     
+대부분의 경우 lock() & unlock() 대신 synchronized블럭을 사용할 수 있으며, 그럴 떄는 synchronized블럭을 사용하는 것이 낫다.     
+이 외에도 tryLock()이라는 메서드가 있는데, 이 메서드는 lock()과 달리,      
+다른 쓰레드에 의해 lock이 걸려있으면 lock을 얻으려고 기다리지 않는다. 또는 지정된 시간만큼만 기다린다.
+
+> boolean tryLock()      
+> boolean tryLock(long timeout, TimeUnit unit) throws InterruptedException
+
+lock()은 lock을 얻을 때까지 쓰레드를 블락block시키므로 쓰레드의 응답성이 나빠질 수 있다.     
+응답성이 중요한 경우, tryLock()을 이용해서 지정된 시간동안 lock을 얻지 못하면     
+다시 작업을 시도할 것인지 포기할 것인지를 사용자가 결정할 수 있게 하는 것이 좋다.     
+그리고 이 메서드는 InterruptedException을 발생시킬 수 있는데, 이는 지정된 시간동안 lock을 얻으려고 기다리는 중에     
+interrupt()에 의해 작업이 취소될 수 있도록 코드를 작성할 수 있다는 뜻이다.     
+
+#### ReentrantLock과 Condition
+Condition은 앞서 wait()&notify() 예제에 요리사 쓰레드와 손님 쓰레드를 구분해서 통지하지 못한다는 단점을 해결하기 위한 것이다.     
+wait()&notify()로 쓰레드의 종류를 구분하지 않고 공유 객체의 waiting pool에 같이 몰아넣는 대신,     
+손님 쓰레드를 위한 Condition과 요리사 쓰레드를 위한 Condition을 만들어서 각각의 waiting pool에서 따로 기다리게 하면 문제는 해결된다.     
+Condition은 이미 생성된 lock으로부터 newCondition()을 호출해서 생성한다.
+
+```java
+private ReentrantLock lock = new ReentrantLock();	//lock을 생성
+//lock으로 condition을 생성
+private Condition forCook = lock.newCondition();
+private Condition forCust = lock.newCondition();
+```
+wait()&notify()대신 Condition의 await()&signal()을 사용하면 된다.
+
+```java
+//Object
+void wait()
+//Condition
+void await()
+void awaitUninterruptibly()
+//Object
+void wait(long timeout)
+//Condition
+boolean await(long time, TimeUnit unit)
+long awaitNanos(long nanosTimeout)
+boolean awaitUntil(Date deadline)
+//Object
+void notify()
+//Condition
+void signal()
+//Object
+void notifyAll()
+//Condition
+void signalAll()
+```
+
+아래의 코드는 이전 예제에서 테이블에 음식을 추가하는 add()인데, wait()&notify()대신 await()&signal()을 사용했다.
+
+```java
+public void add(String dish){
+	lock.lock();
+	
+	try{
+		while(dishes.size() >= MAX_FOOD) {
+			String name = Thread.currentThread().getName();
+			System.out.println(name + " is waiting. ");
+			try {
+				forCook.await();	//wait(); COOK쓰레드를 기다리게 한다.
+			} catch(InterruptedException e) {}
+		}
+		
+		dishes.add(dish);
+		forCust.signal();	//notify(); 기다리고 있는 CUST를 깨우기 위함.
+		System.out.println("Dishes: " + dishes.toString());
+	}finally{
+		lock.unlock();
+	}
+}
+```
+wait()대신 forCook.await()와 forCust.await()를 사용함으로써 대기와 통지의 대상이 명확히 구분된다.
+
+```java
+public class ThreadWaitEx1 {
+
+	public static void main(String[] args) throws Exception{
+		Table table = new Table();	//여러 쓰레드가 공유하는 객체
+		
+		new Thread(new Cook(table), "COOK1").start();
+		new Thread(new Customer(table, "donut"), "CUST1").start();
+		new Thread(new Customer(table, "burger"), "CUST2").start();
+		
+		Thread.sleep(2000);	
+		System.exit(0);
+	}
+}
+class Customer implements Runnable	{
+	private Table table;
+	private String food;
+	
+	Customer (Table table, String food){
+		this.table = table;
+		this.food = food;
+	}
+	public void run() {
+		while(true) {
+			try {Thread.sleep(100);}catch(InterruptedException e) {}
+			String name = Thread.currentThread().getName();
+			
+			table.remove(food);
+			System.out.println(name+ " ate a "+food);
+		}
+	}
+}
+class Cook implements Runnable	{
+	private Table table;
+	
+	Cook(Table table){this.table = table;}
+	
+	public void run() {
+		while(true) {
+			//임의의 요리를 하나 선택해서 table에 추가한다.
+			int idx = (int)(Math.random()*table.dishNum());
+			table.add(table.dishNames[idx]);
+			try {Thread.sleep(10);}catch(InterruptedException e) {}
+		}
+	}
+}
+class Table{
+	String[] dishNames = {"donut", "donut", "burger"};//donut이 더 자주 나온다.
+	final int MAX_FOOD = 6;//테이블에 놓을 수 있는 최대 음식의 개수
+	private ArrayList<String> dishes = new ArrayList<>();
+	
+	private ReentrantLock lock = new ReentrantLock();
+	private Condition forCook = lock.newCondition();
+	private Condition forCust = lock.newCondition();
+	
+	public void add(String dish) {
+		lock.lock();
+		
+		try {
+			while(dishes.size()>=MAX_FOOD) {
+				String name = Thread.currentThread().getName();
+				System.out.println(name+" is waiting. ");
+				
+				try {
+					forCook.await();//wait(); COOK쓰레드를 기다리게 한다.
+					Thread.sleep(500);
+				} catch (InterruptedException e) {}
+			}
+			
+			dishes.add(dish);
+			forCust.signal();//notify();	기다리고 있는 CUST를 깨우기 위함.
+			System.out.println("Dishes: "+ dishes.toString());
+		} finally {
+			lock.unlock();
+		}
+	}
+	public void remove(String dishName) {
+		lock.lock();
+		String name = Thread.currentThread().getName();
+		
+		try {
+			while(dishes.size() == 0) {
+				System.out.println(name + " is waiting. ");
+				try {
+					forCust.await();//wait();	CUST쓰레드를 기다리게 한다.
+					Thread.sleep(500);
+				} catch (InterruptedException e) {}
+			}
+			while(true) {
+				for(int i = 0 ; i<dishes.size(); i++) {
+					if(dishName.equals(dishes.get(i))) {
+						dishes.remove(i);
+						forCook.signal();//notify();	잠자고 있는 COOK을 깨움
+						return;
+					}
+				}
+				try {
+					System.out.println(name + " is waiting.");
+					forCust.await();//wait();	CUST쓰레드를 기다리게 한다.
+					Thread.sleep(500);
+				} catch (InterruptedException e) {}
+			}
+		} finally {
+			lock.unlock();
+		}
+	}
+	public int dishNum() {return dishNames.length;}
+}
+```
+이전 예제와 달리 요리사 쓰레드가 통지를 받아야하는 상황에서 손님 쓰레드가 통지를 받는 경우가 없어졌다.     
+기어 현상이나 경쟁 상태가 개선된 것이다.      
+그래도 쓰레드의 종류에 따라 구분하여 통지를 할 수 있게 된 것일 뿐,     
+여전히 특정 쓰레드를 선택할 수 없기 때문에 같은 종류의 쓰레드간의 기아 현상이나 경쟁 상태가 발생할 가능성은 남아있다.    
+손님이 원하는 음식의 종류별로 Condition을 더 세분화하면 통지를 받고도 원하는 음식이 없어서 다시 기다리는 일이 없도록 할 수 있다.
