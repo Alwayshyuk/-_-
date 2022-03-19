@@ -141,14 +141,14 @@ Runnable을 구현하면 Thread클래스의 static메서드인 currentThread()�
 
 
 > static Thread currentThread()	현재 실행중인 쓰레드의 참조를 반환한다.
-> String getName()	쓰레드의 이름을 반환한다.
+> String getName() 쓰레드의 이름을 반환한다.
 
 그래서 Thread를 상속받은 ThreadEx1_1에서 간단히 getName()을 호출하면 되지만,    
 Runnable을 구현한 ThreadEx1_2에는 멤버가 run()밖에 없기 때문에 Thread클래스의 getName()을 호출하려면,     
 Thread.currentThread().getName()와 같이 해야 한다.     
 
 
-참고로 쓰레의 이름은 다음과 같은 생성자나 메서드를 통해 지정 또는 변경할 수 잏ㅆ따.
+참고로 쓰레의 이름은 다음과 같은 생성자나 메서드를 통해 지정 또는 변경할 수 있다.
 
 ```java
 Thread (Runnable target, String name)
@@ -173,10 +173,10 @@ t1.start();	//쓰레드 t1을 실행시킨다.
 t2.start();	//쓰레드 t2를 실행시킨다.
 ```
 
-사실 start()가 호출되었다고 해서 바로 실행되는 것이 아니라, 일단 실행대기 상태에 있다가 자신의 차례까 되어야 실행된다.     
+사실 start()가 호출되었다고 해서 바로 실행되는 것이 아니라, 일단 실행대기 상태에 있다가 자신의 차례가 되어야 실행된다.     
 만약 실행대기중인 쓰레드가 하나도 없다면 곧바로 실행상태가 된다.     
 
-> 쓰레드의 실행순서는 OS의 스케쥴러가 작성한 스케쥴에 의해 결정된다.
+> 쓰레드의 실행순서는 OS의 스케줄러가 작성한 스케쥴에 의해 결정된다.
 
 한 번 실행이 종료된 쓰레드는 다시 실행할 수 없다. 즉, 하나의 쓰레드에 대해 start()가 한 번만 호출될 수 있다는 뜻이다.     
 그래서 만일 쓰레드의 작업을 한 번 더 수행해야 한다면 아래의 오른쪽 코드와 같이 새로운 쓰레드를 생성한 다음 start()를 호출해야 한다.      
@@ -387,7 +387,7 @@ public class ThreadEx6 {
 }
 ```
 
-이 예젠ㄴ 하나의 쓰레드로 사용자의 입력을 받는 작업과 화면에 숫자를 출력하는 작업을 처리하기 때문에      
+이 예제는 하나의 쓰레드로 사용자의 입력을 받는 작업과 화면에 숫자를 출력하는 작업을 처리하기 때문에      
 사용자가 입력을 마치기 전까지는 화면에 숫자가 출력되지 않다가 사용자가 입력을 마치고 나서야 화면에 숫자가 출력된다.     
 
 ```java
@@ -432,7 +432,7 @@ int getPriority()		//쓰레드의 우선순위를 반환한다.
 
 public static final int MAX_PRIORITY = 10	//최대우선순위
 public static final int MIN_PRIORITY = 1	//최소우선순위
-public static final int NOR_PRIORITY = 10	//보통우선순위
+public static final int NOR_PRIORITY = 5	//보통우선순위
 ```
 
 쓰레드가 가질 수 있는 우선순위의 범위는 1~10이며 높을수록 우선순위가 높다.      
@@ -495,7 +495,8 @@ ThreadGroup(ThreadGroup parent, String name)
 int activeCount()
 //쓰레드 그룹에 포함된 활성상태에 있는 쓰레드의 수를 반환
 int activeGroupCount()
-//쓰레드 그룹에 포함된 활성상태ㅔ 있는 쓰레드 그룹의 수를 반환
+//쓰레드 그룹에 포함된 
+있는 쓰레드 그룹의 수를 반환
 void checkAccess()
 //현재 실행중인 쓰레드가 쓰레드 그룹을 변경할 권한이 있는지 체크.
 //만일 권한이 없다면 SecurityException을 발생시킨다.
@@ -645,7 +646,7 @@ public class ThreadEx10 implements Runnable{
 	public void run()	{
 		while(true) {
 			try {
-				Thread.sleep(2*1000);
+				Thread.sleep(3*1000);
 			} catch (InterruptedException e) {}
 			//autoSave의 값이 true면 autoSave()를 호출한다.
 			if(autoSave)
@@ -802,8 +803,8 @@ static void yield()
 
 #### sleep(long millis) - 일정시간동안 쓰레드를 멈추게 한다.
 sleep()은 지정된 시간동안 쓰레드를 멈추게 한다.
-> static void sleep(long millis)
-> static void sleep(long millis, int nanos)
+> static void sleep(long millis)        
+> static void sleep(long millis, int nanos)        
 
 밀리세컨드와 나노세컨드의 시간단위로 세밀하게 값을 지정할 수 있지만 어느 정도의 오차가 발생할 수 있다.    
 sleep()에 의해 일시정지 상태가 된 쓰레드는 지정된 시간이 다 되거나 interrupt()가 호출되면(InterruptedException발생),     
@@ -1183,7 +1184,7 @@ while(!stopped) {
 이는 stopped의 값이 true가 되었을 떄 interrupt()를 호출하여 sleep()에서 InterruptedException을 발생시키므로     
 즉시 일시정지 상태에서 벗어나게하고 응답성을 향상시킨다.
 
-####join()-다른 쓰레드의 작업을 기다린다.
+#### join()-다른 쓰레드의 작업을 기다린다.
  쓰레드 자신이 하던 작업을 잠시 멈추고 다른 쓰레드가 지정된 시간동안 작업을 수행하도록 할 때 join()을 사용한다.
  
  ```java
@@ -1365,7 +1366,7 @@ synchronized(객체의 참조변수) { ... }
 두 방법 모두 lock의 획득과 반납이 자동으로 이루어지므로 임계 영역만 설정해주면 된다.      
 모든 객체는 lock을 하나씩 가지고 있으며, 해당 객체의 lock을 가지고 있는 쓰레드만 임계 영역의 코드를 수행할 수 있다.    
 그리고 다른 쓰레드들은 lock을 얻을 떄까지 기다리게 된다.     
-임계 영역은 멀티쓰레드 프로그램의 성능을 좌우하기 때문에 가능하면ㄴ 메서드 전체에 락을 거는 것보다    
+임계 영역은 멀티쓰레드 프로그램의 성능을 좌우하기 때문에 가능하면 메서드 전체에 락을 거는 것보다    
 synchronized블럭으로 임계 영역을 최소화해서 보다 효율적인 프로그램이 되도록 노력해야 한다.
 
 ```java
@@ -2056,7 +2057,7 @@ class Table{
 }
 ```
 이전 예제와 달리 요리사 쓰레드가 통지를 받아야하는 상황에서 손님 쓰레드가 통지를 받는 경우가 없어졌다.     
-기어 현상이나 경쟁 상태가 개선된 것이다.      
+기아 현상이나 경쟁 상태가 개선된 것이다.      
 그래도 쓰레드의 종류에 따라 구분하여 통지를 할 수 있게 된 것일 뿐,     
 여전히 특정 쓰레드를 선택할 수 없기 때문에 같은 종류의 쓰레드간의 기아 현상이나 경쟁 상태가 발생할 가능성은 남아있다.    
 손님이 원하는 음식의 종류별로 Condition을 더 세분화하면 통지를 받고도 원하는 음식이 없어서 다시 기다리는 일이 없도록 할 수 있다.
@@ -2142,7 +2143,7 @@ public abstract class RecursiveAction extends ForkJoinTask<void> {
 public abstract class RecursiveTask<V> extends ForkJoinTask<V> {
 	...
 	V result;
-	pritected abstract V compute();		//상속을 통해 이 메서드를 구현해야 한다.
+	protected abstract V compute();		//상속을 통해 이 메서드를 구현해야 한다.
 	...
 }
 ```
