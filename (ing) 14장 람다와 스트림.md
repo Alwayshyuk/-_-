@@ -1029,7 +1029,7 @@ IntStream에는 int타입의 값으로 작업하는데 유용한 메서드들이
 
 ```java
 int sum = strStream.parallel()	//strStream을 병렬 스트릠으로 전환
-					.mapToInt(s -> s.length())
-					.sum();
+			.mapToInt(s -> s.length())
+			.sum();
 ```
 > 병렬 처리가 항상 더 빠른 결과를 얻게 해주는 것은 아니다.
