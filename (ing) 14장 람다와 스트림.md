@@ -1033,3 +1033,476 @@ int sum = strStream.parallel()	//strStream을 병렬 스트릠으로 전환
 			.sum();
 ```
 > 병렬 처리가 항상 더 빠른 결과를 얻게 해주는 것은 아니다.
+
+## 스트림 만들기
+스트림의 소스가 될 수 있는 대상은 배열, 컬렉션, 임의의 수 등 다양하며,     
+이 다양한 소스들로부터 스트림을 생성하는 방법에 대해서 배울 것이다.
+
+#### 컬렉션
+컬렉션의 최고 조상인 Collection에 stream()이 정의되어 있다.      
+그래서 Collection의 자손인 List와 Set을 구현한 컬렉션 클래스들은 모두 이 메서드로 스트림을 생성할 수 있다.      
+stream()은 해당 컬렉션을 소스로 하는 스트림을 반환한다.     
+
+```
+Stream<T> Collection.stream()
+```
+
+예를 들어, List로부터 스트림을 생성하는 코드는 다음과 같다. 
+
+```java
+List<Integer> list = Arrays.asList(1,2,3,4,5);	//가변인자
+Stream<Integer> intstream = list.stream();	//list를 소스로 하는 컬렉션 생성
+```
+
+forEach()는 지정된 작업을 스트림의 모든 요소에 대해 수행한다. 아래의 문장은 스트림의 모든 요소를 화면에 출력한다.
+
+```java
+intStream.forEach(System.out::println);	//스트림의 모든 요소를 출력한다.
+intStream.forEach(System.out::println);	//에러. 스트림이 이미 닫혔다.
+```
+
+forEach()는 스트림의 요소를 소모하면서 작업을 수행하므로 같은 스트림에 forEach()를 두 번 호출할 수 없다.    
+그래서 스트림의 요소를 한번 더 출력하려면 스트림을 새로 생성해야 한다.    
+forEach()에 의해 스트림의 요소가 소모되는 것이지, 소스의 요소가 소모되는 것은 아니므로 같은 소스로부터 다시 스트림을 생성할 수 있다.     
+
+#### 배열
+배열을 소스로 하는 스트림을 생성하는 메서드는 Stream과 Arrays에 static메서드로 정의되어 있다.    
+
+```java
+Stream<T> Stream.of(T...values)	//가변인자
+Stream<T> Stream.of(T[])
+Stream<T> Arrays.stream(T[])
+Stream<T> Arrays.stream(T[] array, int startInclusive, int endExclusive)
+```
+
+예를 들어 문자열 스트림은 다음과 같이 생성한다.
+
+```java
+Stream<String> strStream = Stream.of("a", "b", "c");	//가변인자
+Stream<String> strStream = Stream.of(new String[]{"a","b","c"});
+Stream<String> strStream = Arrays.stream(new String[]{"a,"b","c"});
+Stream<String> strStream = Arrays.stream(new String[]{"a","b","c"},0,3};
+```
+
+그리고 int,long,double과 같은 기본형 배열을 소스로 하는 스트림을 생성하는 메서드도 있다.    
+
+```java
+IntStream IntStream.of(int...values)	//Stream이 아니라IntStream
+IntStream IntStream.of(int[])
+IntStream Arrays.stream(int[])
+IntStream Arrays.stream(int[] array, int startInclusive, int endExclusive)
+```
+
+이 외에도 long과 double타입의 배열로부터 LongStream과 DoubleStream을 반환하는 메서드들이 있다.
+
+#### 특정 범우의 정수
+IntStream과 LongStream은 다음과 같이 지정된 범위의 연속된 정수를 스트림으로 생성해서 반환하는      
+range()와 rangeClosed()를 가지고 있다.      
+
+> IntStream  IntStream.range(int begin, int end)    
+> IntStream  IntStream.rangeClosed(int begin, int end)     
+
+range()의 경우 경계의 끝인 end가 범위에 포함되지 않고, rangeClosed()의 경우는 포함된다.     
+
+```java
+IntSteam intStream = IntStream.range(1, 5);			//1,2,3,4
+IntSteam intStream = IntStream.rangeClosed(1, 5);	//1,2,3,4,5
+```
+
+int보다 큰 범위의 스트림을 생성하려면 LongStream에 있는 동일한 이름의 메서드를 사용하면 된다.     
+
+#### 임의의 수
+난수를 생성하는데 사용되는 Random클래스에는 아래와 같은 인스턴스 메서드들이 포함되어 있다.    
+이 메서드들은 해당 타입의 난수들로 이루어진 스트림을 반환한다.     
+
+> IntStream ints()     
+> LongStream longs()    
+> DoubleStream doubles()
+
+이 메서드들이 반환하는 스트림은 크기가 정해지지 않은 무한 스트림이므로 limit()도 같이 사용해서 스트림의 크기를 제한해 주어야 한다.     
+limit()은 스트림의 개수를 지정하는데 사용되며, 무한 스트림을 유한 스트림으로 만들어 준다.     
+
+```java
+IntStream intStream = new Random().ints();	//무한 스트림
+intStream.limit(5).forEach(System.out::println)	//5개의 요소만 출력한다.
+```
+
+아래의 메서드들은 매개변수로 스트림의 크기를 지정해서 '유한 스트림'을 생성해 반환하므로 limit()을 사용하지 않아도 된다.    
+
+> IntStream ints(long streamSize)      
+> LongStream longs(long streamSize)       
+> DoubleStream doubles(long streamSize)
+
+```java
+IntStream intStream = new Random().ints(5);	//크기가 5인 난수 스트림을 반환
+```
+
+위 메서드들에 의해 생성된 스트림의 난수는 아래의 범위를 갖는다.    
+
+> Integer.MIN_VALUE <= ints() <= Integer.MAX_VALUE       
+> Long.MIN_VALUE <= longs() <= Long.MAX_VALUE    
+> 0.0 <= doubles() <= 1.0
+
+지정된 범위의 난수를 발생시키는 스트림을 얻는 메서드는 아래와 같다. 단, end는 범위에 포함되지 않는다.     
+
+> IntStream ints(int begin, int end)     
+> IntStream ints(long streamSize, int begin, int end)     
+> LongStream longs(long begin, long end)     
+> LongStream longs(long streamSize, long begin, long end)     
+> DoubleStream doubles(double begin, double end)      
+> DoubleStream doubles(long streamSize, double begin, double end)      
+
+#### 람다식 - iterate(), generate()
+Stream클래스의 iterate()와 generate()는 람다식을 매개변수로 받아서, 람다식에 의해 계산되는 값들을 요소로 하는 무한 스트림을 생성한다.     
+
+```
+static<T> Stream<T> iterate(T seed, UnaryOperator<T> f)     
+static<T> Stream<T> generate(Supplier<T> s)
+```
+iterate()는 시드값으로 지정된 값부터 시작해서, 람다식 f에 의해 계산된 결과를 다시 seed값으로 해서 계산을 반복한다.      
+아래의 evenStream은 0부터 시작해서 값이 2씩 계속 증가한다.
+
+```java
+Stream<Integer> evenStream = Stream.iterate(0, n->n+2);	//0,2,4,6,...
+```
+
+generate()도 iterate()처럼, 람다식에 의해 계산되는 값을 요소로 하는 무한 스트림을 생성해서 반환하지만,      
+iterate()와 달리, 이전 결과를 이용해서 다음 요소를 계산하지 않는다.
+
+```java
+Stream<Double> randomStream = Stream.generate(Math::random);
+Stream<Integer> oneStream = Stream.generate(()->1);
+```
+
+그리고 generate()에 정의된 매개변수의 타입은 Supplier< T >이므로 매개변수가 없는 람다식만 허용된다.     
+iterate()와 generate()에 의해 생성된 스트림을 아래와 같이 기본형 스트림 타입의 참조변수로 다룰 수 없다.     
+
+```java
+IntStream evenStream = Stream.iterate(0, n->n+2);	//에러.
+DoubleStream randomStream = Stream.generate(Math::random);	//에러.
+```
+
+필요하다면, 아래와 같이 mapToInt()와 같은 메서드로 변환을 해야 한다.
+
+```java
+IntStream evenStream = Stream.iterate(0, n->n+2).mapToInt(Integer::valueOf);
+Stream<Integer> stream = evenStream.boxed();	//IntStream -> Stream<Integer>
+```
+
+반대로 IntStream타입의 스트림을 Stream<Integer>타입으로 변환하려면, boxed()를 사용하면 된다.    
+
+#### 파일
+java.nio.file.Files는 파일을 다루는데 필요한 유용한 메서드들을 제공하는데,    
+list()는 지정된 디렉토리dir에 있는 파일의 목록을 소스로 하는 스트림을 생성해서 반환한다.    
+
+```
+Stream<Path> Files.list(Path dir)
+```
+이 외에 파일의 한 행line을 요소로 하는 스트림을 생성하는 메서드도 있다.    
+아래의 세번째 메서드는 BufferedReader클래스에 속한 것인데,      
+파일 뿐 아니라 다른 입력대상으로부터도 데이터를 행단위로 읽어올 수 있다.      
+
+```
+Stream<String> Files.lines(Path path)      
+Stream<String> Files.lines(Path path, Charset cs)     
+Strimg<String> lines()	//BufferedReader의 메서드    
+```
+#### 빈 스트림
+요소가 하나도 없는 비어있는 스트림을 생성할 수도 있다.     
+스트림에 연산을 수행한 결과가 하나도 없을 때, null보다 빈 스트림을 반환하는 것이 낫다.
+
+```java
+Stream emptyStream = Stream.empty();	//empty()는 빈 스트림을 생성해서 반환한다.
+long count = emptyStream.count();	//count값은 0
+```
+
+#### 두 스트림의 연결
+Stream의 static메서드인 concat()을 사용하면, 두 스트림을 하나로 연결할 수 있다.     
+연결하려는 두 스트림의 요소는 같은 타입이어야 한다.
+
+```java
+String[] str1 = {"123", "456", "789"};
+String[] str2 = {"ABC", "abc", "DEF"};
+
+Stream<String> strs1 = Stream.of(str1);
+Stream<String> strs2 = Stream.of(str2);
+Stream<String> strs3 = Stream.concat(strs1, strs2);	//두 스트림을 하나로 연결
+```
+
+## 스트림의 중간연산
+
+#### 스트림 자르기 - skip(), limit()
+skip()과 limit()은 스트림의 일부를 잘라낼 때 사용한다.      
+skip(3)은 처음 3개 요소를 건너뛰고, limit(5)는 스트림의 요소를 5개로 제한한다.
+
+```
+Stream<T> skip(long n)     
+Stream<T> limit(long maxSize)
+```
+예를 들어 10개의 요소를 가진 스트림에 skip(3)과 limit(5)을 순서대로 적용하면      
+4번째 요소부터 5개의 요소를 가진 스트림이 반환된다.
+
+```java
+IntStream intStream = IntStream.rangeClosed(1,10);	//1~10의 요소를 가진 스트림
+intStream.skip(3).limit(5).forEach(System.out::println);	//4,5,6,7,8
+```
+
+기본형 스트림에도 skip()과 limit()이 정의되어 있는데, 반환 타입이 기본형 스트림이라는 점만 다르다.     
+
+> IntStream skip(long n)     
+> IntStream limit(long maxSize)     
+
+#### 스트림의 요소 걸러내기 - filter(), distinct()
+distinct()는 스트림에서 중복된 요소들을 제거하고, filter()는 주어진 조건(Predicate)에 맞지 않는 요소를 걸러낸다.     
+
+```java
+Stream<T> filter (Predicate<? super T> predicate)     
+Stream<T> distinct()
+
+IntStream intStream = IntStream.of(1,2,2,3,3,3,4,5,5,6);
+intStream.distinct().forEach(System.out::println);	//1,2,3,4,5,6
+```
+
+filter()는 매개변수로 Predicate를 필요로 하는데, 연산결과가 boolean인 람다식을 사용해도 된다.    
+
+```java
+IntStream intStream = IntStream.rangeClosed(1,10);	//1~10
+intStream.filter(i -> i%2 == 0);.forEach(System.out::println)	//2,4,6,8,10
+```
+필요하다면 filter()를 다른 조건으로 여러 번 사용할 수도 있다.
+
+```java
+아래의 두 문장은 동일한 결과를 얻는다.
+intStream.filter(i -> i%2 != 0 && i%3 != 0).forEach(System.out::println);	//157
+intStream.filter(i -> i%2 != 0).filter(i -> i%3 != 0).forEach(System.out::println);
+```
+
+#### 정렬 - sorted()
+스트림을 정렬할 때는 sorted()를 사용하면 된다.
+
+```
+Stream<T> sorted()      
+Stream<T> sorted(Comparator<? super T> comparator)
+```
+sorted()는 지정된 Comparator로 스트림을 정렬하는데, Comparator대신 int값을 반환하는 람다식을 사용하는 것도 가능하다.      
+Comparator를 지정하지 않으면 스트림 요소의 기본 정렬 기준Comparable으로 정렬한다.    
+단, 스트림의 요소가 Comparable을 구현한 클래스가 아니면 예외가 발생한다.
+
+```java
+Stream<String> strStream = Stream.of("dd", "aaa", "CC", "cc", "b");
+strStream.sorted().forEach(System.out::println);	//CCaaabccdd
+```
+
+위의 코드는 문자열 스트림을 String에 정의된 기본 정렬(사전순 정렬)로 정렬해서 출력한다.     
+아래의 표는 위의 문자열 스트림strStream을 다양한 방법으로 정렬한 후에 forEach(System.out::println)로 출력한 결과를 보여준다.    
+
+```java
+문자열 스트림 정렬 방법
+strStream.sorted()	//기본 정렬
+strStream.sorted(Comparator.naturalOrder())	//기본 정렬
+strStream.sorted((s1,s2)->s1.compareTo(s2));	//람다식도 가능
+strStream.sorted(String::compareTo);	//위 문장과 동일
+출력결과: CCaaabccdd
+
+strStream.sorted(Comparator.reverseOrder())	//기본 정렬 역순
+strStream.sorted(Comparator.<String>naturalOrder().reverse())
+출력결과: ddccbaaaCC
+
+strStream.sorted(String.CASE_INSENSITIVE_ORDER)	//대소문자 구분안함
+출력결과: aaabCCccdd
+
+strStream.sorted(String.CASE_INSENSITIVE_ORDER.reverse())
+출력결과: ddCCccbaaa
+
+strStream.sorted(Comparator.comparing(String::length))	//길이 순 정렬
+strstream.sorted(Comparator.comparingInt(String::length))	//no오토박싱
+출력결과: bddCCccaaa
+
+strStream.sorted(Comparator.comparing(String::length).reverse())
+출력결과: aaaddCCccb
+```
+
+Comparator인터페이스에 static메서드와 디폴트 메서드들은 Comparator< T >를 반환하며,    
+아래의 메서드 목록은 지네릭에서 와일드 카드를 제외하여 간단히 한 것이다.
+
+```java
+//Comparator의 default메서드
+reversed()
+thenComparing(Comparator<T> other)
+thenComparing(Function<T,U> keyExtractor)
+thenComparing(Function<T,U> ketExtractor, Comparator<U> ketComp)
+thenComparingInt(ToIntFunction<T> keyExtractor)
+thenComparingLong(ToLongFunction<T> KeyExtractor)
+thenComparingDouble(ToDoubleFunction<T> keyExtractor)
+
+//Comparator의 static 메서드
+naturalOrder()
+reverseOrder()
+Comparing(Function<T,U> keyExtractor)
+Comparing(Function<T,U> keyExtractor, Comparator<U> keyComparator)
+ComparingInt(ToIntFunction<T> keyExtractor)
+ComparingLong(ToLongFunction<T> keyExtractor)
+comparingDouble(ToDoubleFunction<T> keyExractor)
+nullsFirst(Comparator<T> comparator)
+nullsLast(COmparator<T> comparator)
+```
+정렬에 사용되는 메서드의 개수가 많지만, 가장 기본적인 메서드는 comparing()이다.
+
+```
+comparing(Function<T,U> keyExtractor)       
+comparing(Function<T,U> keyExtractor, Comparator<U> keyComparator)
+```
+스트림의 요소가 Comparable을 구현한 경우, 매개변수 하나짜리를 사용하면 되고 그렇지 않은 경우,     
+추가적인 매개변수로 정렬기준Comparator을 따로 지정해 줘야한다.
+
+```
+comparingInt(ToIntFunction<T> keyExtractor)     
+comparingLong(ToLongFunction<T> keyExtractor)     
+comparingDouble(ToDoubleFunction<T> keyExtractor)     
+```
+비교대상이 기본형인 경우, comparing()대신 위의 메서드를 사용하면 오토박싱과 언박싱과정이 없어서 더 효율적이다.     
+그리고 정렬 조건을 추가할 때는 thenComparing()을 사용한다.
+
+```
+thenComparing(Comparator<T> other)     
+thenComparing(Function<T,U> keyExtractor)     
+thenComparing(Function<T,U> keyExtractor, Comparator<U> keyComp)
+```
+예를 들어 학생 스트림을 반별, 성적순, 그리고 이름순으로 정렬하여 출력하려면 다음과 같다.
+
+```java
+studentStream.sorted(Comparator.comparing(Student::getBan)
+				.thenComparing(Student::getTotalScore)
+				.thenComparing(Student::getName))
+				.forEach(System.out::println)
+```
+
+다음 예제는 학생의 성적을 반별 오름차순, 총점별 내림차순으로 정렬하여 출력한다.
+
+```java
+public class StreamEx1 {
+
+	public static void main(String[] args) {
+		Stream<Student> studentStream = Stream.of(
+				new Student("이자바",3,300),
+				new Student("김자바",1,200),
+				new Student("안자바",2,100),
+				new Student("박자바",2,150),
+				new Student("소자바",1,200),
+				new Student("나자바",3,290),
+				new Student("감자바",3,180)
+				);
+		studentStream.sorted(Comparator.comparing(Student::getBan)
+				.thenComparing(Comparator.naturalOrder()))
+				.forEach(System.out::println);
+	}
+}
+class Student implements Comparable<Student>	{
+	String name;
+	int ban, totalScore;
+	
+	Student(String name, int ban, int totalScore){
+		this.name = name;
+		this.ban = ban;
+		this.totalScore = totalScore;
+	}
+	public String toString() {
+		return String.format("[%s, %d, %d]", name, ban, totalScore);
+	}
+	String getName(){ return name;}
+	int getBan() { return ban;}
+	int getTotalScore() { return totalScore;}
+	
+	//총점 내림차순을 기본 정렬로 한다.
+	public int compareTo(Student s) {
+		return s.totalScore - this.totalScore;
+	}
+}
+[김자바, 1, 200]
+[소자바, 1, 200]
+[박자바, 2, 150]
+[안자바, 2, 100]
+[이자바, 3, 300]
+[나자바, 3, 290]
+[감자바, 3, 180]
+```
+
+학생의 성적 정보를 요소로 하는 Stream< Student >을 반변로 정렬한 다음에, 총점별 내림차순으로 정렬한다.     
+정렬하는 코드를 짧게 하려고, Comparable을 구현해서 총점별 내림차순 정렬이 Student클래스의 기본 정렬이 되도록 했다.     
+
+#### 변환 - map()
+스트림의 요소에 저장된 값 중에서 원하는 필드만 뽑아내거나 특정 형태로 변환해야 할 때가 있다.   
+이 때 사용하는 것이 바로 map()이다. 이 메서드의 선언부는 아래와 같으며,     
+매개변수로 T타입을 R타입으로 변환해서 반환하는 함수를 지정해야한다.
+
+```
+Stream<R> map(Function<? super T, ? extends R> mapper)
+```
+
+예를 들어 File의 스트림에서 파일의 이름만 뽑아서 출력하고 싶을 때,    
+아래와 같이 map()을 이용하면 File객체에서 파일의 이름String만 간단히 뽑아낼 수 있다.
+
+```java
+Stream<File> fileStream = Stream.of(new File("Ex1.java"),new File("Ex1"),
+		new File("Ex1.bak"),new File("Ex2.java"),new File("Ex1.txt"));
+	
+//map()으로 Stream<File>을 Stream<String>으로 변환
+Stream<String> filenameStream = fileStream.map(File::getName);
+filenameStream.forEach(System.out::println);	//스트림의 모든 파일 이름을 출력
+```
+map() 역시 중간 연산이므로, 연산결과는 String을 요소로 하는 스트림이다.     
+map()으로 Stream< File >을 Stream< String >으로 변환했다고 볼 수 있다.     
+그리고, map()도 filter()처럼 하나의 스트림에 여러 번 적용할 수 있다.    
+아래 문장은 File의 스트림에서 파일의 확장자만을 뽑은 다음 중복을 제거해서 출력한다.
+
+```java
+fileStream.map(File::getName)	//Stream<File> -> Stream<String>
+.filter(s -> s.indexOf('.') != -1)	//확장자가 없는 것은 제외
+.map(s -> s.substring(s.indexOf('.')+1))	//Stream<String> -> Stream<String>
+.map(String::toUpperCase)		//모두 대문자로 변환
+.distinct()		//중복 제거
+.forEach(System.out::println)	//JAVABAKTXT
+```
+
+#### 조회 - peek()
+연산과 연산 사이에 올바르게 처리되었는지 확인하고 싶을 때 사용하는 메서드이다.    
+forEach()와 달리 스트림의 요소를 소모하지 않으므로 연산 사이에 여러 번 끼워 넣어도 문제가 되지 않는다.
+
+```java
+fileStream.map(File::getName)	//Stream<File> -> Stream<String>
+.filter(s -> s.indexOf('.') != -1)	//확장자가 없는 것은 제외
+.peek(s ->System.out.printf("filename = %s%n", s))	//파일명을 출력한다.
+.map(s -> s.substring(s.indexOf('.')+1))	//Stream<String> -> Stream<String>
+.peek(s -> System.out.printf("extension = %s%n", s))	//확장자를 출력한다.
+.forEach(System.out::println)	//JAVABAKTXT
+```
+
+filter()나 map()의 결과를 확인할 때 유용하게 사용될 수 있다.
+
+```java
+public class StreamEx2 {
+
+	public static void main(String[] args) {
+		File[] fileArr = { new File("Ex1.java"),new File("Ex1.bak"),
+				new File("Ex2.java"),new File("Ex1"),new File("Ex1.txt")};
+		
+		Stream<File> fileStream = Stream.of(fileArr);
+		
+		//map()으로 Stream<File>을 Stream<String>으로 변환
+		Stream<String> filenameStream = fileStream.map(File::getName);
+		filenameStream.forEach(System.out::println);
+		//Ex1.java	Ex1.bak	Ex2.java	Ex1	Ex1.txt
+		
+		fileStream = Stream.of(fileArr);
+		
+		fileStream.map(File::getName)
+		.filter(s -> s.indexOf('.') != -1)
+		.map(s -> s.substring(s.indexOf('.')+1))
+		.map(String::toUpperCase)
+		.distinct()
+		.forEach(System.out::print);
+		//JAVABAKTXT
+		System.out.println();
+	}
+}
+```
