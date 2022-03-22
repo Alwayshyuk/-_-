@@ -1095,7 +1095,7 @@ IntStream Arrays.stream(int[] array, int startInclusive, int endExclusive)
 
 이 외에도 long과 double타입의 배열로부터 LongStream과 DoubleStream을 반환하는 메서드들이 있다.
 
-#### 특정 범우의 정수
+#### 특정 범위의 정수
 IntStream과 LongStream은 다음과 같이 지정된 범위의 연속된 정수를 스트림으로 생성해서 반환하는      
 range()와 rangeClosed()를 가지고 있다.      
 
