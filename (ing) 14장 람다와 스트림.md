@@ -1506,3 +1506,510 @@ public class StreamEx2 {
 	}
 }
 ```
+
+#### mapToInt(_), mapToLong(), mapToDouble()
+
+map()은 연산의 결과로 Stream< T >타입의 스트림을 반환하는데,     
+스트림의 요소를 숫자로 변환하는 경우 IntStream과 같은 기본형 스트림으로 변환하는 것이 더 유용할 수 있다.     
+Stream< T >타입의 스트림을 기본형 스트림으로 변환할 때 사용하는 것이 아래의 메서드이다.
+
+```java
+DoubleStream	mapToDouble(ToDoubleFunction<? super T> mapper)
+IntStream	mapToInt(ToIntFunction<? super T> mapper)
+LongStream	mapToLong(ToLongFunction<? super T> mapper)
+```
+
+앞서 사용했던 studentStream에서, 스트림에 포함된 모든 학생의 성적을 합산해야 한다면,    
+map()으로 학생의 총점을 뽑아서 새로운 스트림을 만들어 낼 수 있다.    
+
+```java
+Stream<Integer> studentScoreStream = studentStream.map(Student::getTotalScore);
+```
+
+그러나 이때는 처음부터 mapToInt()를 사용해서 Stream< Integer >가 아닌        
+IntStream타입의 스트림을 생성해서 사용하는 것이 더 효율적이다. 성적을 더할 때, Integer를 int로 변환할 필요가 없기 떄문이다.
+
+```java
+IntStream studentScoreStream = studentStream.mapToInt(Student::getTotalScore);
+int allTotalScore = studentScoreStream.sum();	//int sum();
+```
+
+count()만 지원하는 Stream< T >와 달리 IntStream과 같은 기본형 스트림은 아래와 같이 숫자를 다루는데 편리한 메서드들을 제공한다.     
+
+```
+int	sum()	스트림의 모든 요소를 총합
+OptionalDouble	average()	sum()/(double)count()
+OptionalInt	max()	스트림의 요소 중 제일 큰 값
+OptionalInt	min()	스트림의 요소 중 제일 작은 값
+```
+
+스트림의 요소가 하나도 없을 때, sum()은 0을 반환하면 그만이지만 다른 메서드들은 단순히 0을 반환할 수 없다.    
+여러 요소들을 합한 평균이 0일 수도 있기 때문이다. 이를 구분하기 위해 단순히 double값을 반환하는 대신,     
+double타입의 값을 내부적으로 가지고 있는 OptionalDouble을 반환하는 것이다.     
+OptionalInt, OptionalDouble 등은 일종의 래퍼 클래스로 각각 int값과 Double값을 내부적으로 가지고 있다.     
+
+
+그리고 이 메서드들은 최종연산이기 때문에 호춣 후에 스트림이 닫힌다는 점을 주의해야 한다.    
+아래의 코드에서처럼 스트림에 sum()과 average()를 연속해서 호출할 수 없다.
+
+```java
+IntStream scoreStream = studentStream.mapToInt(Student::getTotalScore);
+long totalScore = ScoreStream.sum();	//sum()은 최종연산이라 호출 후 스트림이 닫힘
+OptionalDouble average = scoreStream.average();	//에러. 스트림이 이미 닫혔음
+double d = average.getAsDouble();	//OptionalDouble에 저장된 값을 꺼내서 d에 저장
+```
+
+sum()과 average()를 모두 호출해야할 때, 스트림을 또 생성하는 것은 불편하다.    
+그래서 summaryStatistics()라는 메서드가 따로 제공된다.
+
+```java
+IntSummaryStatistics stat = scoreStream.summaryStatistics();
+long totalCount = stat.getCount();
+long totalScore = stat.getSum();
+double avgScore = stat.getAverage();
+int minScore = stat.getMin();
+int maxScore = stat.getMax();
+```
+
+IntSummaryStatistics는 위와 같이 다양한 종류의 메서드를 제공한다.     
+기본형 스트림 LongStream과 DoubleStream도 IntStream과 같은 연산(반환타입은 다름)을 지원한다.   
+반대로 IntStream을 Stream< T >로 변환할 때는 mapToObj()를, Stream< Integer >로 변환할 때는 boxed()를 사용한다.    
+
+```java
+Stream<U>	mapToObj(IntFunction<? extends U> mapper)
+Stream<Integer>	boxed()
+```
+
+아래는 로또번호를 생성해서 출력하는 코드인데, mapToObj()를 이용해서 IntStream을 Stream< String >으로 변환하였다.    
+
+```java
+IntStream intStream = new Random().ints(1,46);	//1~45사이의 정수
+Stream<String> lottoStream = intStream.distinct().limit(6).sorted().mapToObj(i->ii+",");	//정수를 문자열로 변환
+lottoStream.forEach(System.out::print);
+```
+
+참고로 CharSequence에 정의된 chars()는 String이나 StringBuffer에 저장된 문자들을 IntStream으로 다룰 수 있게 해준다.     
+
+```java
+IntStream charStream = "12345".chars();	//default IntStream chars()
+int charSum = charStream.map(ch -> ch-'0').sum();	//charSum = 15;
+```
+위의 코드에서 사용된 map()은 IntStream에 정의된 것으로 IntStream을 결과로 반환한다.     
+그리고 mapToInt()와 함께 자주 사용되는 메서드로는 Integer의 parseInt()나 valueOf()가 있다.
+
+```
+Stream<String> -> IntStream 변환할 때, mapToInt(Integer::parseInt)
+Stream<Integer> -> IntStream 변환할 때, mapToInt(Integer::intValue)
+```
+
+```java
+public class StreamEx3 {
+
+	public static void main(String[] args) {
+		Student[] stuArr = {
+				new Student("이자바",3,300),
+				new Student("김자바",1,200),
+				new Student("안자바",2,100),
+				new Student("박자바",2,150),
+				new Student("소자바",1,200),
+				new Student("나자바",3,290),
+				new Student("감자바",3,180)
+		};
+		Stream<Student> stuStream = Stream.of(stuArr);
+		
+		stuStream.sorted(Comparator.comparing(Student::getBan)
+				.thenComparing(Comparator.naturalOrder()))
+				.forEach(System.out::println);
+		//[김자바, 1, 200]	[소자바, 1, 200]	[박자바, 2, 150]	[안자바, 2, 100]
+		//[이자바, 3, 300]	[나자바, 3, 290]	[감자바, 3, 180]
+		
+		stuStream = Stream.of(stuArr);	//스트림을 다시 생성한다.
+		IntStream stuScoreStream = stuStream.mapToInt(Student::getTotalScore);
+		
+		IntSummaryStatistics stat = stuScoreStream.summaryStatistics();
+		System.out.println(stat.getCount());	//7
+		System.out.println(stat.getSum());	//1420
+		System.out.println(stat.getAverage());	//202.85714285714286
+		System.out.println(stat.getMin());	//100
+		System.out.println(stat.getMax());	//300
+	}
+}
+class Student implements Comparable<Student>{
+	String name;
+	int ban, totalScore;
+	Student(String name, int ban, int totalScore){
+		this.name = name;
+		this.ban = ban;
+		this.totalScore = totalScore;
+	}
+	public String toString() {
+		return String.format("[%s, %d, %d]",name,ban,totalScore).toString();
+	}
+	String getName() { return name; }
+	int getBan()	{ return ban;	}
+	int getTotalScore()	{	return totalScore;	}
+	
+	public int compareTo(Student s) {
+		return s.totalScore - this.totalScore;
+	}
+}
+```
+
+#### flatMap() - Stream< T[] > 를 Stream< T >로 변환
+
+스트림의 요소가 배열이거나 map()의 연산결과가 배열인 경우, 즉 스트림의 타입이 Stream< T[] >인 경우,     
+Stream< T >로 다루는 것이 더 편리할 때가 있다. 그럴 때는 map()대신 flatMap()을 사용하면 된다.    
+예를 들어 아래와 같이 요소가 문자열 배열(String[])인 스트림이 있을 때,
+
+```java
+Stream<String[]> strArrStrm = Stream.of(
+	new String[] {"abc", "def", "ghi"},
+	new String[]	{"ABC", "GHI", "JKLMN"}
+};
+```
+
+먼저 스트림의 요소를 변환해야 하므로 일단 map()을 쓰고 여기에 배열을 스트림으로 만들어주는 Arrays.stream(T[])를 함께 사용했다.    
+
+```java
+Stream<Stream<String>> strStrStrm = strArrStrm.map(Arrays::stream);
+```
+
+예상한 것과 달리, Stream< String[] >을 map(Arrays::stream)으로 변환한 결과는 Stream< String >이 아닌,      
+Stream< Stream< String >>이다. 즉, 스트림의 스트림인 것이다.    
+각 요소의 문자열들이 합쳐지지 않고, 스트림의 스트림 형태로 되어버렸다.   
+이 때, 간단히 map()을 아래와 같이 flatMap()으로 바꾸기만 하면 원하는 결과를 얻을 수 있다.    
+
+```java
+Stream<String> strStrm = strArrStrm.flatMap(Arrays.stream);
+```
+
+flatMap()은 map()과 달리 스트림의 스트림이 아닌 스트림으로 만들어 준다.
+
+
+다른 예를 들자면, 아래와 같이 여러 문장을 요소로 하는 스트림이 있을 때,     
+이 문장들을 split()으로 나눠서 요소가 단어인 스트림을 만들고 싶다면 flatMap()을 사용하여야 한다.
+
+```java
+String[] lineArr = { "Belive or not It is true", "Do or do not There is no try"};
+Stream<String> lineStream = Arrays.stream(lineArr);
+Stream<String> strStream = lineStream.flatMap(line -> Stream.of(line.split(" +")));
+```
+strStream의 단어들을 모두 소문자로 변환하고, 중복된 단어들을 제거한 다음에 정렬해서 출력하는 문장은 다음과 같다.    
+
+```java
+strStream.map(String::toLowerCase)	//모든 단어 소문자로 변경
+	.distinct()	//중복 제거
+	.sorted()	//사전 순으로 정렬
+	.forEach(System.out::println);	//화면에 출력
+```
+
+드물지만, 스트림을 요소로 하는 스트림, 즉 스트림의 스트림을 하나의 스트림으로 합칠때도 flatMap()을 사용한다.
+
+```java
+Stream<String> strStrm = Stream.of("abc", "def", "jklmn");
+Stream<String> strStrm2 = Stream.of("ABC", "GHI", "JKLMN");
+
+Stream<Stream<String>> strmstrm = Stream.of(strStrm, strStrm2);
+```
+
+위와 같이 요소의 타입이 Stream< String >인 스트림(Stream< Stream< String>>)이 있을 때,     
+이 스트림을 Stream< String >으로 변환하려면 다음과 같이 map()과 flatMap()을 함께 사용해야 한다.    
+
+```java
+Stream<String> strStream = strmstrem
+	.map(s->s.toArray(String[]::new))	//Stream<Stream<String>> -> Stream<String[]>
+	.flatMap(Arrays::stream);		//Stream<String[]> -> Stream<String>
+```
+
+toArray()는 스트림을 배열로 변환하여 반환한다.     
+매개변수를 지정하지 않으면 Object[]을 반ㅇ환하므로 위와 같이 특정 타입의 생성자를 지정해줘야 한다.     
+여기서는 String배열의 생성자(String[]::new)를 지정하였다.    
+그 다음엔 flatMap()으로 Stream< String[] >을 Stream< String >으로 변환한다.   
+
+```java
+public class StreamEx4 {
+
+	public static void main(String[] args) {
+		Stream<String[]> strArrStrm = Stream.of(
+				new String[] {"abc", "def", "jkl"},
+				new String[] {"ABC", "GHI", "JKL"}
+				);
+		
+		Stream<String> strStrm = strArrStrm.flatMap(Arrays::stream);
+		
+		strStrm.map(String::toLowerCase)
+				.distinct()
+				.sorted()
+				.forEach(System.out::println);
+		//abc	def	ghi	jkl
+		System.out.println();
+		
+		String[] lineArr = {
+				"Believe or not It is true",
+				"Do or do not There is no try",};
+		
+		Stream<String> lineStream =lineStream = Arrays.stream(lineArr);
+		lineStream.flatMap(line -> Stream.of(line.split(" +")))
+			.map(String::toLowerCase)
+			.distinct()
+			.sorted()
+			.forEach(System.out::println);
+		//believe	do	is	it	no	not	or	there	try	true
+		System.out.println();
+		
+		Stream<String> strStrm1 = Stream.of("AAA", "ABC", "bBb", "Dd");
+		Stream<String> strStrm2 = Stream.of("bbb", "aaa", "ccc", "dd");
+		
+		Stream<Stream<String>> strStrmStrm = Stream.of(strStrm1, strStrm2);
+		Stream<String> strStream = strStrmStrm.map(s -> s.toArray(String[]::new))
+				.flatMap(Arrays::stream);
+		
+		strStream.map(String::toLowerCase)
+			.distinct()
+			.forEach(System.out::println);
+		//aaa	abc	bbb	dd	ccc
+	}
+}
+```
+
+## Optional< T >와 OptionalInt
+
+최종 연산의 결과 타입이 Optional인 경우가 있다.    
+Optional< T >은 지네릭 클래스로 T타입의 객체를 감싸는 래퍼 클래스이다.    
+그래서 Optional타입의 객체에는 모든 타입의 참조변수를 담을 수 있다.
+
+```java
+public final class Optional<T> {
+	private final T value;	//T타입의 참조변수
+	...
+}
+```
+최종 연산의 결과를 그냥 반환하는 게 아니라 Optional객체에 담아서 반환하는 것이다.     
+이처럼 객체에 담아서 반환을 하면, 반환된 결과가 null인지 매번 if문으로 체크하는 대신      
+Optional에 정의된 메서드를 통해서 간단히 처리할 수 있다.
+이를 이용하면 널 체크를 위한 if문 없이도 NullPointerException이 발생하지 않는 보다 간결하고 안전한 코드를 작성할 수 있다.    
+
+> Object클래스에 isNull(), nonNull(), requireNonNull()과 같은 메서드가 있는 것도     
+> 널 체크를 위한 if문을 메서드안으로 넣어서 코드의 복잡도를 낮추기 위한 것이다.
+
+#### Optional객체 생성하기
+Optional객체를 생성할 때는 of() 또는 ofNullable()을 사용한다.
+
+```java
+String str = "abc";
+Optional<String> optVal = Optional.of(str);
+Optional<String> optVal = Optional.of("abc");
+Optional<String> optVal = Optional.of(new String("abc"));
+```
+만일 참조변수의 값이 null일 가능성이 있으면, of()대신 ofNullable()을 사용해야한다.    
+of()는 매개변수의 값이 null이면 NullPointerException이 발생하기 때문이다.    
+
+```java
+Optional<String> optVal = Optional.of(null);	//NullPointerException 발생
+Optional<String> optVal = Optional.ofNullable(null);	//OK
+```
+Optional< T >타입의 참조변수를 기본값으로 초기화할 때는 empty()를 사용한다.    
+null로 초기화하는 것이 가능하지만, empty()로 초기화 하는 것이 바람직하다.    
+
+> empty()는 지네릭 메서드라서 앞에 < T >를 붙였다. 추정 가능하므로 생략할 수 있다.
+
+```java
+Optional<String> optVal = null;		//널로 초기화
+Optional<String> optVal = Optional.<String>empty();	//빈 객체로 초기화
+```
+
+#### Optional객체의 값 가져오기
+Optional객체에 저장된 값을 가져올 때는 get()을 사용한다.    
+값이 null일 때는 NoSuchElementException이 발생하며, 이를 대비하여 orElse()로 대체할 값을 지정할 수 있다.
+
+```java
+Optional<String> optVal = Optional.of("abc");
+String str1 = optVal.get();	//optVal에 저장된 값을 반환. null이면 예외발생
+String str2 = optVal.orElse("");	//optVal에 저장된 값이 null일 때는, ""를 반환
+```
+orElse()의 변형으로는 null을 대체할 값을 반환하는 람다식을 지정할 수 있는     
+orElseGet()과 null일 때 지정된 예외를 발생시키는 orElseThrow()가 있다.    
+
+```
+T orElseGet (Supplier<? extends T> other)
+T orElseThrow (Supplier<? extends X> exceptionSupplier)
+```
+사용하는 방법은 아래와 같다.   
+
+```java
+String str3 = optVal3.orElseGet(String::new);	//()->new String()과 동일
+String str4 = optVal4.orElseThrow(NullPointerException::new);	//널이면 예외발생
+```
+Stream처럼 Optional객체에도 filter(), map(), flatMap()을 사용할 수 있다.    
+map()의 연산결과가 Optional< Optional< T >>일 때, flatMap()을 사용하면 Optional< T >를 결과로 얻는다.    
+만일 Optional객체의 값이 null이면, 이 메서드들은 아무 일도 하지 않는다.
+
+```java
+int result = Optional.of("123")
+	.filter(x->x.length() > 0)
+	.map(Integer::parseInt).orElse(-1);	//result = 123
+
+result = Optional.of("")
+	.filter(x->x.length()>0)
+	.map(Integer::parseInt).orElse(-1);	//result = -1
+```
+
+parseInt()는 예외가 발생하기 쉬운 메서드이다.   
+만일 예외처리된 메서드를 만든다면 다음과 같을 것이다.
+
+```java
+static int optStrToInt(Optional<String> optStr, int defaultValue){
+	try{
+		return optStr.map(Integer::parseInt).get();
+	}catch(Exception e){
+		return defaultValue;
+	}
+}
+```
+isPresent()는 Optional객체의 값이 null이면 false를, 아니면 true를 반환한다.    
+ifPresent(Consumer< T > block)은 값이 있으면 주어진 람다식을 실행하고 없으면 아무 일도 하지 않는다.    
+
+```java
+if(str != null) {
+	System.out.println(str);
+}
+```
+만일 위와 같은 조건문이 있다면, isPresent()를 이용해서 다음과 같이 쓸 수 있다.
+
+```java
+if(Optional.ofNullable(str).isPresent()) {
+	System.out.println(str);
+}
+```
+이 코드를 ifPresent()를 이용하면 더 간단히 할 수 있다. 아래의 문장은 참조변수 str이 null이 아닐 때만 값을 출력하고,    
+null이면 아무 일도 일어나지 않는다.
+
+```java
+Optional.ofNullable(str).ifPresent(System.out::println);
+```
+
+ifPresent()는 Optional< T >를 반환하는 findAny()나 findFirst()와 같은 최종 연산과 잘 어울린다.     
+Stream클래스에 정의된 메서드 중에서 Optional< T >를 반환하는 것들은 다음과 같다.
+
+```
+Optional<T> findAny()
+Optional<T> findFirst()
+Optional<T> max(Comparator<? super T> comparator)
+Optional<T> min(Comparator<? super T> comparator)
+Optional<T> reduce(BinaryOperator<T> accumulator)
+```
+
+이처럼 Optional< T >를 결과로 반환하는 최종 연산 메서드들은몇 개 없다.   
+심지어 max()와 min()같은 메서드들은 reduce()를 이용해서 작성된 것이다.    
+
+#### OptionalInt, OptionalLong, OptionalDouble
+IntStream과 같은 기본형 스트림에는 Optional도 기본형을 값으로 하는 OptionalInt, OptionalLong, OptionalDouble을 반환한다.     
+아래는 IntStream에 정의된 메서드들이다.
+
+```
+OptionalInt	findAny()
+OptionalInt	findFirst()
+OptionalInt	reduce(IntBinaryOperator op)
+OptionalInt	max()
+OptionalInt	min()
+OptionalDouble	average()
+```
+
+반환 타입이 Optional< T >가 아니라는 것을 제외하고는 Stream에 정의된 것과 비슷하다.     
+그리고 기본형 Optional에 저장된 값을 꺼낼 때 사용하는 메서드의 이름이 조금씩 다르다.
+
+```
+Optional<T>
+값을 반환하는 메서드: T	get()
+OptionalInt
+값을 반환하는 메서드: int	getAsInt()
+OptionalLong
+값을 반환하는 메서드: long	getAsLong()
+OptionalDouble
+값을 반환하는 메서드: double	getAsDouble()
+```
+
+OptionalInt는 다음과 같이 정의되어 있다.   
+
+```java
+public final class OptionalInt{
+	...
+	private final boolean isPresent;	//값이 저장되어 있으면 true
+	private final int value;	//int타입의 변수
+```
+기본형 int의 기본값은 0이므로 아무런 값도 갖지 않는 OptionalInt에 저장되는 값은 0일 것이다.    
+
+```java
+OptionalInt opt = OptionalInt.of(0);	//OptionalInt에 0을 저장
+OptionalInt opt2 = OptionalInt.empty();	//OptionalInt에 0을 저장
+```
+저장된 값이 없는 것과 0이 저장된 것은 isPresent라는 인스턴스 변수로 구분이 가능하다.    
+isPresent()는 이 인스턴스변수의 값을 반환한다.
+
+```java
+System.out.println(opt.isPresent());	//true
+System.out.println(opt2.isPresent());	//false
+
+System.out.println(opt.getAsInt());		//0
+System.out.println(opt2.getAsInt());	//NoSuchElementException
+
+System.out.println(opt.equals(opt2));	//false
+```
+그러나 Optional객체의 경우 null을 저장하며 비어있는 것과 동일하게 취급한다.
+
+```java
+Optional<String> opt = Optional.ofNullable(null);
+Optional<String> opt2 = Optional.empty();
+
+System.out.println(opt.equals(opt2));	//true
+```
+
+```java
+public class OptionalEx1 {
+
+	public static void main(String[] args) {
+		Optional<String> optStr = Optional.of("abcde");
+		Optional<Integer> optInt = optStr.map(String::length);
+		System.out.println(optStr.get()); // abcde
+		System.out.println(optInt.get()); // 5
+
+		int result1 = Optional.of("123").filter(x -> x.length() > 0).map(Integer::parseInt).get();
+		int result2 = Optional.of("").filter(x -> x.length() > 0).map(Integer::parseInt).orElse(-1);
+		System.out.println(result1); // 123
+		System.out.println(result2); // -1
+
+		Optional.of("456").map(Integer::parseInt).ifPresent(x -> System.out.println(x)); // 456
+
+		OptionalInt optInt1 = OptionalInt.of(0);
+		OptionalInt optInt2 = OptionalInt.empty();
+
+		System.out.println(optInt1.isPresent()); // true
+		System.out.println(optInt2.isPresent()); // false
+
+		System.out.println(optInt1.getAsInt()); // 0
+//		System.out.println(optInt2.getAsInt());	//NoSuchElementException
+		System.out.println(optInt1); // OptionalInt[0]
+		System.out.println(optInt2); // OptionalInt.empty
+		System.out.println(optInt1.equals(optInt2)); // false
+
+		Optional<String> opt = Optional.ofNullable(null);
+		Optional<String> opt2 = Optional.empty();
+		System.out.println(opt); // Optional.empty
+		System.out.println(opt2); // Optional.empty
+		System.out.println(opt.equals(opt2)); // true
+
+		int result3 = optStrToInt(Optional.of("123"), 0);
+		int result4 = optStrToInt(Optional.of(""), 0);
+
+		System.out.println(result3); // 123
+		System.out.println(result4); // 0
+	}
+	static int optStrToInt(Optional<String> optStr, int defaultValue) {
+		try {
+			return optStr.map(Integer::parseInt).get();
+		} catch (Exception e) {
+			return defaultValue;
+		}
+	}
+}
+```
