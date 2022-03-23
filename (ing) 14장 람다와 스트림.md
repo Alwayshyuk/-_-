@@ -2013,3 +2013,380 @@ public class OptionalEx1 {
 	}
 }
 ```
+
+## 스티림의 최종 연산
+최종 연산은 스트림의 요소를 소모해서 결과를 만들어낸다.     
+그래서 최종 연산후에는 스트림이 닫히게 되고 더 이상 사용할 수 없다.    
+최종 연산은 결과를 스트림 요소의 합과 같은 단일 값이거나, 스트림의 요소가 담긴 배열 또는 컬렉션일 수 있다.      
+
+#### forEach()
+forEach()는 peek()과 달리 스트림의 요소를 소모하는 최종연산이다.     
+반환 타입이 void이므로 스트림의 요소를 출력하는 용도로 많이 사용된다.
+
+```
+void forEach(Consumer<? super T> action)
+```
+
+#### 조건 검사 - allMathch(), anyMatch(), noneMatch(), findFirst(), findAny()
+스트림의 요소에 대해 지정된 조건에 모든 요소가 일치하는지, 일부가 일치하는지 아니면     
+어떤 요소도 일치하지 않는지 확인하는데 사용할 수 있는 메서드들이다.    
+이 메서드들은 모두 매개변수로 Predicate를 요구하며, 연산결과로 boolean을 반환한다.
+
+```
+boolean allMatch (Predicate<? super T> predicate)
+boolean anyMatch (Predicate<? super T> predicate)
+boolean noneMatch (Predicate<? super T> predicate)
+```
+
+예를 들어 학생들의 성적 정보 스트림stuStream에서 총점이 낙제점인 학생이 있는 지 확인하는 방법은 아래와 같다.
+
+```java
+boolean noFailed = stuStream.anyMatch(s->s.getTotalScore()<=100)
+```
+이 외에도 스트림의 요소 중에서 조건에 일치하는 첫 번째 것을 반환하는 findFirst()가 있는데,    
+주로 filter()와 함께 사용되어 조건에 맞는 스트림의 요소가 있는지 확인하는데 사용된다.     
+병렬 스트림인 경우에는 findFirst()대신 findAny()를 사용해야 한다.
+
+```java
+Optional<Student> stu = stuStream.filter(s->s.getTotalScore()<=100).findFirst();
+Optional<Student> stu = parallelStream.filter(s->s.getTotalScore()<=100).findAny();
+```
+findAny()와 findFirst()의 반환 타입은 Optional< T >이며,    
+스트림의 요소가 없을 떄는 비어있는 Optional객체를 반환한다.    
+
+> 비어있는 Optional객체는 내부적으로 null을 저장하고 있다.
+
+#### 통계 - count(), sum(), average(), max(), min()
+IntStream과 같은 기본형 스트림에는 스트림의 요소들에 대한 통계 정보를 얻을 수 있는 메서드들이 있다.    
+그러나 기본형 스트림이 아닌 경우에는 통계와 관련된 메서드들이 아래의 3개뿐이다.
+
+> 기본형 스트림의 min(), max()와 달리 매개변수로 Comparator를 필요로 한다는 차이가 있다.
+
+```
+long count()
+Optional<T> max(Comparator<? super T> comparator)
+Optional<T> min(Comparator<? super T> comparator)
+```
+대부분의 경우 위의 메서드를 사용하기보다 기본형 스트림으로 변환하거나, reduce()와 collect()를 사용해서 통계 정보를 얻는다.    
+
+#### 리듀싱 - reduce()
+
+reduce()는 이름에서 짐작할 수 있듯이, 스트림의 요소를 줄여나가면서 연산을 수행하고 최종결과를 반환한다.    
+그래서 매개변수의 타입이 BinaryOperator< T >인 것이다.     
+처음 두 요소를 가지고 연산한 결과를 가지고 그 다음 요소와 연산한다.   
+이 과정에서 스트림의 요소를 하나씩 소모하게 되며, 스트림의 모든 요소를 소모하게 되면 그 결과를 반환한다.    
+
+```
+Optional<T> reduce(BinaryOperator<T> accumulator)
+```
+
+이 외에도 연산결과의 초기값identity을 갖는 reduce()도 있는데,    
+이 메서드들은 초기값과 스트림의 첫 번째 요소로 연산을 시작한다.     
+스트림의 요소가 하나도 없는 경우, 초기값이 반환되므로, 반환 타입이 Optional< T >가 아니라 T이다.
+
+```
+BinaryOperator<T>는 BiFunction의 자손이며, BiFunction<T,T,T>와 동등하다.
+
+T reduce(T identity, BinaryOperator<T> accumulator)
+U reduce(U identity, BiFunction<U,T,U> accumulator, BinaryOperator<U> combiner)
+```
+
+위의 두 번째 메서드의 마지막 매개변수인 combiner는 병렬 스트림에 의해 처리된 결과를 합칠 때 사용하기 위해 사용하는 것이다.     
+최종 연산 count()와 sum() 등은 내부적으로 모두 reduce()를 이용해서 아래와 같이 작성된 것이다.   
+
+```java
+int count = intStream.reduce(0,(a,b) -> a+1);
+int sum = intStream.reduce(0,(a,b) -> a+b);
+int max = intStream.reduce(Integer.MIN_VALUE,(a,b) -> a>b? a:b);
+int min = intStream.reduce(Integer.MAX_VALUE,(a,b) -> a>b? a:b);
+```
+
+사실 max()와 min()의 경우, 초기값이 필요없으므로 Optional< T >를 반환하는 매개변수 하나짜리 reduce()를 사용하는 것이 낫다.    
+단, intStream의 타입이 IntStream인 경우 OptionalInt를 사용해야 한다.    
+Stream< T >와 달리 IntStream에 정의된 reduce()의 반환타입이 OptionalInt이기 때문이다.    
+
+```java
+//OptionalInt reduce(IntBinaryOperator accumulator)
+OptionalInt max = intStream.reduce((a,b) -> a>b? a:b);
+OptionalInt min = intStream.reduce((a,b) -> a<b? a:b);
+```
+
+참고로 위의 문장들에서 람다식을 Integer클래스의 static메서드 max()와 min()을 이용해서 메서드 참조로 바꾸면 다음과 같다.    
+
+```java
+OptionalInt max = intStream.reduce(Integer::max);	//int max(int a, int b)
+OptionalInt min = intStream.reduce(Integer::min);	//int min(int a, int b)
+```
+
+그리고 OptionalInt에 저장된 값을 꺼내려면 아래와 같이 하면 된다.
+
+```java
+int maxValue = max.getAsInt();	//OptionalInt에 저장된 값을 maxValue에 저장
+```
+
+reduce()가 내부적으로 어떻게 동작하는지 이해를 돕기 위해,    
+reduce()로 스트림의 모든 요소를 다 더하는 과정을 for문으로 표현해 보았다.
+
+```java
+int a = identity;	//초기값을 a에 저장한다.
+for(int b : stream)
+	a = a + b;	//모든 요소의 값에 a를 누적한다.
+```
+
+위의 for문을 보고 나면, reduce()가 아마도 다음과 같이 작성되어 있을 것이라고 추측하는 것은 그리 어려운 일이 아닐 것이다.    
+
+```java
+T reduce(T identity, BinaryOperator<T> accumulator)	{
+	T a = identity;
+	for(T b : stream)
+		a = accumulator.apply(a,b);
+	
+	return a;
+}
+```
+reduce()를 사용하는 방법은 간단하다.     
+그저 초기값identity과 어떤 연산BinaryOperator으로 스트림의 요소를 줄여나갈 것인지만 결정하면 된다.   
+
+```java
+public class StreamEx5 {
+
+	public static void main(String[] args) {
+		String[] strArr = {
+				"Inheritaance", "Java", "Lambda", "stream",
+				"OperatorDouble", "IntStream", "count", "sum"
+		};
+		
+		Stream.of(strArr).forEach(System.out::println);
+		//Inheritaance	Java	Lambda	stream	OperatorDouble
+		//IntStream	count	sum
+		boolean noEmptyStr = Stream.of(strArr).noneMatch(s->s.length() == 0);
+		Optional<String> sWord = Stream.of(strArr)
+					.filter(s->s.charAt(0) == 's').findFirst();
+		System.out.println(noEmptyStr);	//true
+		System.out.println(sWord.get());	//stream
+		
+		//Stream<String[]>을 IntStream으로 변환
+		IntStream intStream1 = Stream.of(strArr).mapToInt(String::length);
+		IntStream intStream2 = Stream.of(strArr).mapToInt(String::length);
+		IntStream intStream3 = Stream.of(strArr).mapToInt(String::length);
+		IntStream intStream4 = Stream.of(strArr).mapToInt(String::length);
+		
+		int count = intStream1.reduce(0, (a,b)->a+1);
+		int sum = intStream2.reduce(0, (a,b)->a+b);
+		
+		OptionalInt max = intStream3.reduce(Integer::max);
+		OptionalInt min = intStream4.reduce(Integer::min);
+		
+		System.out.println(count);	//8
+		System.out.println(sum);	//59
+		System.out.println(max);	//OptionalInt[14]
+		System.out.println(min);	//OptionalInt[3]
+	}
+}
+```
+## collect()
+스트림의 최종 연산중에서 가장 복잡하면서도 유용하게 활용될 수 있는 것이 collect()이다.    
+collect()는 스트림의 요소를 수집하는 최종 연산으로 리듀싱과 유사하다.     
+collect()가 스트림의 요소를 수집하려면, 어떻게 수집할 것인가에 대한 방법이 정의되어 있어야 하는데,    
+이 방법을 정의한 것이 바로 컬렉터collector이다.     
+컬렉터는 Collector인터페이스를 구현한 것으로, 직접 구현할 수도 있고 미리 작성된 것을 사용할 수도 있다.     
+Collectors클래스는 미리 작성된 다양한 종류의 컬렉터를 반환하는 static메서드를 가지고 있으며,     
+이 클래스를 통해 제공되는 컬렉터만으로도 많은 일들을 할 수 있다.
+
+> collect() 스트림의 최종 연산, 매개변수로 컬렉터를 필요로 한다.     
+> Collector 인터페이스, 컬렉터는 이 인터페이스를 구현해야한다.     
+> Collectors 클래스, static메서드로 미리 작성된 컬렉터를 제공한다.
+
+collect()는 매개변수의 타입이 Collector인데, 매개변수가 Collector를 구현한 클래스의 객체이어야 한다는 뜻이다.    
+그리고 collect()는 이 객체에 구현된 방법대로 스트림의 요소를 수집한다.   
+
+> sort()할 때, Comparator가 필요한 것처럼 collect()할 때는 Collector가 필요하다.
+
+```java
+Object collect(Collector collector)	//Collector를 구현한 클래스의 객체를 매개변수로
+Object collect(Supplier supplier, BiConsumer accumulator, BiConsumer combiner)
+```
+
+그리고 매개변수가 3개나 정의된 collect()는 잘 사용되지는 않지만,       
+Collector인터페이스를 구현하지 않고 간단히 람다식으로 수집할 때 사용하면 편리하다.         
+
+#### 스트림을 컬렉션과 배열로 변환
+#### - toList(), toSet(), toMap(), toCollection(), toArray()
+
+스트림의 모든 요소를 컬렉션에 수집하려면, Collection클래스의 toList()와 같은 메서드를 사용하면 된다.    
+List나 Set이 아닌 특정 컬렉션을 지정하려면, toCollection()에 해당 컬렉션의 생성자 참조를 매개변수로 넣어주면 된다.    
+
+```java
+List<String> names = stuStream.map(Student::getNames).collect(Collectors.toList());
+ArrayList<String> list = names.stream().collect(Collections.toCollection(ArrayList::new));
+```
+
+Map은 키와 값의 쌍으로 저장해야하므로 객체의 어떤 필드를 키로 사용할지와 값으로 사용할지를 지정해줘야 한다.    
+
+```java
+Map<String,Person> map = personStream.collect(Collectors.toMap(p->p.getRegId(),p->p));
+```
+
+위의 문장은 요소의 타입이 Person인 스트림에서 사람의 주민번호regId를 키로 하고, 값으로 Person객체를 그대로 저장한다.  
+  
+> 항등 함수를 의미하는 람다식 p -> p대신 Function.identity()를 쓸 수도 있다.
+
+스트림에 저장된 요소들을 T[]타입의 배열로 변환하려면, toArray()를 사용하면 된다.    
+단, 해당 타입의 생성자 참조를 매개변수로 지정해줘야 한다.    
+만일 매개변수를 지정하지 않으면 반환되는 배열의 타입은 Object[]이다.
+
+```java
+Student[] stuNames = studentStream.toArray(Student[]::new);	//OK
+Student[] stuNames = studentStream.toArray();	//에러
+Object[] stuNames = studentStream.toArray();	//OK
+```
+
+#### 통계- counting(), summingInt(), averagingInt(), maxBy(), minBy()
+최종 연산들이 제공하는 통계 정보를 collect()로 똑같이 얻을 수 있다.     
+collect()를 사용하지 않고도 쉽게 얻을 수 있는데, 굳이 collect()를 사용한 방법을 보여주는 것은     
+collect()의 사용법을 보여주기 위한 것이다.     
+간결한 코드를 위해 Collectors의 static메서드를 호출할 때는 Collectors.을 생략하였다. static import되어 있다고 가정한다.
+
+> summungInt()외에도 summingLong(), summingDouble()이 있다. averagingInt()도 마찬가지다.
+
+```java
+long count = stuStream.count();
+long count = stuStream.collect(counting());	//Collctors.counting()
+
+long totalScore = stuStream.mapToInt(Student::getTotalScore).sum();
+long totalScore = stuStream.collect(summingInt(Student::getTotalScore));
+
+Optional topScore = studentStream.mapToInt(Student::getTotalScore).max();
+
+Optional<Student> topStudent = stuStream.max(Comparator.comparingInt(Student::getTotalScore));
+Optional<Student> topStudent = stuStream.collect(maxBy(Comparator.comparingInt(Student::getTotalScore));
+
+IntSummaryStatistics stat = stuStream.mapToInt(Student::getTotalStream).summaryStatistics();
+IntSummaryStatistics stat = stuStrema.collect(summarizingInt(Student::getTotalScore));
+```
+summingInt()와 summarizingInt()를 혼동하지 않도록 주의하여야 한다.   
+
+#### 리듀싱 - reducing()
+리듀싱 또한 collect()로 가능하다. IntStream에는 매개변수 3개짜리 collect()만 정의되어 있으므로 boxed()를 통해    
+IntStream을 Stream< Integer >로 변환해야 매개변수 1개짜리 collect()를 쓸 수 있다.    
+
+```java
+IntStream intStream = new Random().ints(1,46).distinct().limit(6);
+
+OptionalInt max = intStream.reduce(Integer::max);
+Optional<Integer> max = intSteam.boxed().collect(reducing(Integer::max));
+
+long sum = intStream.reduce(0, (a,b) -> a+b);
+long sum = intStream.boxed().collect(reducing(0, (a,b) -> a+b);
+
+int grandTotal = stuStream.map(Student::getTotalScore).reduce(0, Integer::sum);
+int grandTotal = stuStream.collect(reducing(0, student::getTotalScore, Integer::sum));
+```
+Collectors.reducing()에는 아래와 같이 3가지 종류가 있다. 세 번째 메서드만 제외하고 reduce()와 같다.    
+세 번째 것은 위의 예에서 알 수 있듯이 map()과 reduce()를 하나로 합쳐놓은 것이다.
+
+```java
+Collector reducing(BinaryOperator<T> op)
+Collector reducing(T identity, BinaryOperator<T> op)
+Collector reducing(U identity, Function<T,U> mapper, BinaryOperator<U> op)
+```
+위의 메서드 목록 역시 와일드 카드를 제거하여 간략히 하였다.
+
+#### 문자열 결합 - joining()
+문자열 스트림의 모든 요소를 하나의 문자열로 연결해서 반환한다.    
+구분자를 지정해줄 수도 있고, 접두사와 접미사도 가능하다.    
+스트림의 요소가 String이나 StringBuffer처럼 CharSequence의 자손인 경우에만 결합이 가능하므로     
+스트림의 요소가 문자열이 아닌 경우에는 먼저 map()을 이용해서 스트림의 요소를 문자열로 변환해야 한다.
+
+```java
+String studentNames = stuStream.map(Student::getName).collect(joining());
+String studentNames = stuStream.map(Student::getName).collect(joining(","));
+String studentNames = stuStream.map(Student::getName).collect(joining(",","[","]"));
+```
+
+만일 map()없이 스트림에 바로 joining()하면, 스트림의 요소에 toString()을 호출한 결과를 결합한다.   
+
+```java
+//Student의 toString()으로 결합
+String studentInfo = stuStream.collect(joining(","));
+```
+
+```java
+public class StreamEx6 {
+
+	public static void main(String[] args) {
+		Student[] stuArr = {
+				new Student("이자바",3,300),
+				new Student("김자바",1,200),
+				new Student("안자바",2,100),
+				new Student("박자바",2,150),
+				new Student("소자바",1,200),
+				new Student("나자바",3,290),
+				new Student("감자바",3,180)
+		};
+		
+		//학생 이름만 뽑아서 List<String>에 저장
+		List<String> names = Stream.of(stuArr).map(Student::getName)
+						.collect(Collectors.toList());
+		System.out.println(names);
+		//[이자바, 김자바, 안자바, 박자바, 소자바, 나자바, 감자바]
+
+		//스트림을 배열로 변환
+		Student[] stuArr2 = Stream.of(stuArr).toArray(Student[]::new);
+		
+		for(Student s : stuArr2)
+			System.out.println(s);
+		//[이자바 3 300]	[김자바 1 200]	[안자바 2 100]	[박자바 2 150]
+		//[소자바 1 200]	[나자바 3 290]	[감자바 3 180]
+		
+		//스트림을 Map<String, Student>로 변환. 학생 이름이 key
+		Map<String, Student> stuMap = Stream.of(stuArr)
+					.collect(Collectors.toMap(s->s.getName(), p->p));
+		for(String name : stuMap.keySet())
+			System.out.println(name+"-"+stuMap.get(name));
+		//안자바-[안자바 2 100]	김자바-[김자바 1 200]	박자바-[박자바 2 150]	나자바-[나자바 3 290]
+		//감자바-[감자바 3 180]	이자바-[이자바 3 300]	소자바-[소자바 1 200]
+		
+		long count = Stream.of(stuArr).collect(counting());
+		long totalScore = Stream.of(stuArr).collect(summingInt(Student::getTotalScore));
+		System.out.println(count);	//7
+		System.out.println(totalScore);	//1420
+		
+		totalScore = Stream.of(stuArr).collect(reducing(0, Student::getTotalScore, Integer::sum));
+		System.out.println(totalScore); //1420
+		
+		Optional<Student> topStudent = Stream.of(stuArr)
+					.collect(maxBy(Comparator.comparingInt(Student::getTotalScore)));
+		System.out.println(topStudent.get()); //[이자바 3 300]
+		
+		IntSummaryStatistics stat = Stream.of(stuArr)
+				.collect(summarizingInt(Student::getTotalScore));
+		System.out.println(stat);
+		//IntSummaryStatistics{count=7, sum=1420, min=100, average=202.857143, max=300}
+		
+		String stuNames = Stream.of(stuArr).map(Student::getName).collect(joining(",","[","]"));
+		System.out.println(stuNames);
+		//[이자바,김자바,안자바,박자바,소자바,나자바,감자바]
+	}
+}
+class Student implements Comparable<Student> {
+	String name;
+	int ban, totalScore;
+	
+	Student(String name, int ban, int totalScore){
+		this.name = name;
+		this.ban = ban;
+		this.totalScore = totalScore;
+	}
+	public String toString() {
+		return String.format("[%s %d %d]", name, ban, totalScore);
+	}
+	String getName() { return name;}
+	int getBan()	{ return ban;}
+	int getTotalScore() { return totalScore;}
+	
+	public int compareTo(Student s) {
+		return s.totalScore - this.totalScore;
+	}
+}
+```
