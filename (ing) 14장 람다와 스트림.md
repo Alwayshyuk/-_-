@@ -2390,3 +2390,452 @@ class Student implements Comparable<Student> {
 	}
 }
 ```
+
+#### 그룹화와 분할-groupingBy(), partitioningBy()
+그룹화는 스트림의 요소를 특정 기준으로 그룹화하는 것을 의미하고,       
+분할은 스트림의 요소를 지정된 조건에 일치하는 그룹과 일치하지 않는 그룹으로의 분할을 의미한다.      
+아래의 메서드 정의에서 알 수 있듯이, groupingBy()는 스트림의 요소를 Function으로, partitioningBy()는 Predicate로 분류한다.    
+
+```java
+Collector groupingBy(Function classifier)
+Collector groupingBy(Function classifier, Cloolector downstream)
+Collector groupingBy(Function classifier, Suppliter mapFactory, Collector downstream)
+
+Collector partitioningBy(Predicate predicate)
+Collector partitioningBy(Predicate predicate, Collector downstream)
+```
+
+메서드의 정의를 보면 groupingBy()와 partitioningBy()가 분류를        
+Function으로 하느냐 Predicate로 하느냐의 차이만 있을 뿐 동일하다는 것을 알 수 있다.     
+스트림을 두 개의 그룹으로 나눠야 한다면, 당연히 partitioningBy()로 분할하는 것이 더 빠르다.     
+그 외에는 groupingBy()를 쓰면 되다. 그리고 그룹화와 분할의 결과는 Map에 담겨 반환된다.    
+
+
+예시에 사용될 Student클래스는 다음과 같이 정의되어 있다고 가정한다.  
+
+```java
+class Student {
+	String name;
+	boolean isMale;
+	int hak,ban,score;
+	
+	Student(String name, boolean isMale, int hak, int ban, int score){
+		this.name = name;
+		this.isMale = isMale;
+		this.hak = hak;
+		this.ban = ban;
+		this.score = score;
+	}
+	String getName() { return name; }
+	boolean isMale() { return isMale; }
+	int getHak() { return hak; }
+	int getBan() { return ban; }
+	int getScore() { return score; }
+	
+	public String toString() {
+		return String.format("[ %s, %s, %d학년, %d반, %3d점]",
+			name, isMale? "남":"여", hak, ban, score);
+	}
+	
+	enum Level { HIGH, MID, LOW }
+}
+```
+
+그리고 스트림 stuStream은 아래와 같은 요소들도 이루어져 있다고 가정한다.   
+
+```java
+Stream<Student> stuStream = Stream.of(
+	new Student("나자바", true, 1, 1, 300),
+	new Student("김지미", false, 1, 1, 250),
+	new Student("김자바", true, 1, 1, 200),
+	new Student("이지미", false, 1, 2, 150),
+	new Student("남자바", true, 1, 2, 100),
+	new Student("안지미", false, 1, 2, 50),
+	new Student("황지미", false, 1, 3, 100),
+	new Student("강지미", false, 1, 3, 150),
+	new Student("이자바", true, 1, 3, 200),
+	
+	new Student("나자바", true, 2, 1, 300),
+	new Student("김지미", false, 2, 1, 250),
+	new Student("김자바", true, 2, 1, 200),
+	new Student("이지미", false, 2, 2, 150),
+	new Student("남자바", true, 2, 2, 100),
+	new Student("안지미", false, 2, 2, 50),
+	new Student("황지미", false, 2, 3, 100),
+	new Student("강지미", false, 2, 3, 150),
+	new Student("이자바", true, 2, 3, 200));
+```
+
+#### partitioningBy()에 의한 분류
+
+가장 기본적인 분할은 학생들을 성별로 나누어 List에 담는 것이다.
+
+```java
+// 1. 기본 분할
+Map<Boolean, List<student>> stuBySex = stuStream
+	.collect(partitioningBy(Student::isMale));	//학생들을 성별로 분할
+	
+List<Student> maleStudent = stuBySex.get(true);	//Map에서 남학생 목록을 얻는다.
+List<Student> femaleStudent = stuBySex.get(false);	//Map에서 여학생 목록을 얻는다.
+```
+
+아래는 counting()을 추가해서 남학생의 수와 여학생의 수를 구하는 예제이다.
+
+```java
+2. 기본 분할 + 통계 정보
+Map<Boolean, Long> stuNumBySex = stuStream
+	.collect(partitioningBy(Student::isMale, counting()));
+	
+System.out.println("남학생 수: "+ stuNumBySex.get(true));	//남학생 수 : 8
+System.out.println("여학생 수: "+ stuNumBySex.get(false));	//여학생 수 : 10
+```
+
+counting()대신 summingLong()을 사용하면 남학생과 여학생의 총점을 구할 수 있다.    
+아래는 남학생 1등과 여학생 1등을 구하는 예제이다. 
+
+```java
+Map<Boolean, Optional<Student>> topScoreBySex = stuStream
+	.collect(partitioningBy(Student::isMale, maxBy(comparingInt(Student::getScore))));
+
+
+System.out.println("남학생 1등: "+ topScoreBySex.get(true);
+//남학생 1등: Optional[[나자바, 남, 1, 1, 300]]
+System.out.println("여학생 1등: "+ topScoreBySex.get(false);
+//여학생 1등: Optional[[김지미, 여, 1, 1, 250]]
+```
+
+maxBy()는 반환타입이 Optional<Student>라서 위와 같은 결과가 나왔다.     
+Optional<Student>가 아닌 Student를 반환 결과로 얻으려면,       
+아래와 같이 collectingAndThen()과 Optional::get을 함께 사용하면 된다.
+
+```java
+Map<Boolean, Student> topScoreBySex = stuStream
+	.collect(partitioningBy(Student::isMale,
+		collectingAndThen(maxBy(comparingInt(Student::getScore)), Optional::get)));
+
+System.out.println("남학생 1등: "+ topScoreBySex.get(true);
+//남학생 1등: [나자바, 남, 1, 1, 300]
+System.out.println("여학생 1등: "+ topScoreBySex.get(false);
+//여학생 1등: [김지미, 여, 1, 1, 250]
+```
+성적이 150점 아래인 학생들을 불합격처리하고 성별로 분류하여 얻어내려면 partitioningBy()를 한 번 더 사용해서 이중 분할을 하면 된다.
+
+```java
+Map<Boolean, Map<Boolean, List<Student>>> failedStuBySex = stuStream
+	.collect(partitioningBy(Student::isMale, partitioningBy(s->s.getScore<150)));
+
+List<Student> failedMaleStu = failedStuBySex.get(true).get(true);
+List<Student> failedFemaleStue = failedStuBySex.get(false).get(true);
+```
+
+#### groupingBy()에 의한 분류
+stuStream을 반 별로 그룹지어 Map에 저장하는 방법은 다음과 같다.
+
+```java
+Map<Integer, List<Student>> stuByBan = stuStream
+	.collect(groupingBy(Student::getBan));	//toList()가 생략됨
+```
+groupingBy()로 그룹화를 하면 기본적으로 List< T >에 담는다. 그래서 위의 문장은 아래 문장의 생략된 형태이다.     
+만일 원한다면, toList()대신 toSet()이나 toCollection(HashSet::new)을 사용할 수도 있다.      
+단, Map의 지네릭 타입도 적절히 변경해줘야 한다.
+
+```java
+Map<Integer, List<Student>> stuByBan = stuStream
+	.collect(groupingBy(Student::getBan),toList()));	//toList() 생략가능
+
+Map<Integer, HashSet<Student>> stuByHak = stuStream
+	.collect(groupingBy(Student::getHak, toCollection(Hash::new)));
+```
+아래는 stuStream을 성적의 등급으로 그룹화한 예제이다.    
+
+```java
+Map<Student.Level, Long> stuByLevel = stuStream
+	.collect(groupingBy( s -> {
+		if(s.getScore() >= 200)	return Student.Level.HIGH;
+		else if(s.getScore() >= 100)	return Student.Level.MID;
+		else	return Student.Level.LOW;
+	}, counting())};
+```
+
+groupingBy()를 여러 번 사용하면, 다수준 그룹화가 가능하다.   
+만일 학년별로 그룹화 한 후에 다시 반별로 그룹화하고 싶으면 아래와 같이 한다.    
+
+```java
+Map<Integer, Map<Integer, List<String>>> stuByHakAndBan = stuStream
+	.collect(groupingBy(Student::getHak, groupingBy(Student::getBan)));
+```
+
+위의 코드를 발전시켜서 각 반의 1등을 출력하고 싶다면, collectingAndThen()과 maxBy()를 쓰면 된다.   
+
+```java
+Map<Integer, Map<Integer, Student>> topStuByHakAndBan = stuStream
+	.collect(groupingBy(Student::getHak, groupingBy(Student::getBan,
+		collectingAndThen(maxBy(comparingInt(Student::getScore)), optinal::get))));
+```
+
+아래의 코드는 학년별과 반별로 그룹화한 다음에, 성적 그룹으로 변환mapping하여 Set에 저장한다.   
+
+```java
+Map<Integer, Map<Integer, Set<Student.level>>> stuByHakAndBan = stuStream
+	.collect(groupingBy(Student::getHak, groupingBy(Student::getBan,
+		mapping( s -> {
+			if(s.getScore() >= 200)	return Student.Level.HIGH;
+			else if(s.getScore() >= 100)	return Student.Lavel.MID;
+			else		return Student.Level.LOW;
+		}, toSet()))));
+```
+
+```java
+import static java.util.stream.Collectors.*;
+import static java.util.Comparator.*;
+
+
+public class StreamEx8 {
+
+	public static void main(String[] args) {
+		Student[] stuArr = {
+				new Student("나자바", true, 1, 1, 300),
+				new Student("김지미", false, 1, 1, 250),
+				new Student("김자바", true, 1, 1, 200),
+				new Student("이지미", false, 1, 2, 150),
+				new Student("남자바", true, 1, 2, 100),
+				new Student("안지미", false, 1, 2, 50),
+				new Student("황지미", false, 1, 3, 100),
+				new Student("강지미", false, 1, 3, 150),
+				new Student("이자바", true, 1, 3, 200),
+				
+				new Student("나자바", true, 2, 1, 300),
+				new Student("김지미", false, 2, 1, 250),
+				new Student("김자바", true, 2, 1, 200),
+				new Student("이지미", false, 2, 2, 150),
+				new Student("남자바", true, 2, 2, 100),
+				new Student("안지미", false, 2, 2, 50),
+				new Student("황지미", false, 2, 3, 100),
+				new Student("강지미", false, 2, 3, 150),
+				new Student("이자바", true, 2, 3, 200)};
+		
+		Map<Integer, List<Student>> stuByBan = Stream.of(stuArr)
+				.collect(groupingBy(Student::getBan));
+		
+		for(List<Student> ban: stuByBan.values()) {
+			for(Student s : ban)
+				System.out.println(s);
+		}
+		
+		Map<Student.Level, List<Student>> stuByLevel = Stream.of(stuArr)
+				.collect(groupingBy(s-> {
+					if(s.getScore() >= 200) return Student.Level.HIGH;
+					else if(s.getScore() >= 100) return Student.Level.MID;
+					else return Student.Level.LOW;
+				}));
+		TreeSet<Student.Level> keySet = new TreeSet<>(stuByLevel.keySet());
+		for(Student.Level key : keySet) {
+			System.out.println(key);
+			
+			for(Student s : stuByLevel.get(key))
+				System.out.println(s);
+			System.out.println();
+		}
+		
+		Map<Student.Level, Long> stuCntByLevel = Stream.of(stuArr)
+				.collect(groupingBy(s-> {
+					if(s.getScore()>=200) return Student.Level.HIGH;
+					else if(s.getScore() >= 100) return Student.Level.MID;
+					else return Student.Level.LOW;
+				}, counting()));
+		
+		for(Student.Level key : stuCntByLevel.keySet())
+			System.out.printf("[%s] - %d명, ", key, stuCntByLevel.get(key));
+		
+		Map<Integer, Map<Integer, List<Student>>> stuByHakAndBan = 
+				Stream.of(stuArr).collect(groupingBy(Student::getHak, groupingBy(Student::getBan)));
+		
+		for(Map<Integer, List<Student>> hak : stuByHakAndBan.values()) {
+			for(List<Student> ban : hak.values()) {
+				for(Student s : ban)
+					System.out.println(s);
+			}
+		}
+		
+		Map<Integer, Map<Integer, Student>> topStuByHakAndBan = 
+				Stream.of(stuArr).collect(groupingBy(Student::getHak, groupingBy(Student::getBan,
+						collectingAndThen(maxBy(comparingInt(Student::getScore)), Optional::get))));
+		
+		for(Map<Integer, Student> ban : topStuByHakAndBan.values())
+			for(Student s : ban.values())
+				System.out.println(s);
+		
+		Map<String, Set<Student.Level>> stuByScoreGroup = Stream.of(stuArr)
+				.collect(groupingBy(s->s.getHak()+"-"+s.getBan(),
+						mapping(s->{
+							if(s.getScore() >= 200) return Student.Level.HIGH;
+							else if(s.getScore() >= 100) return Student.Level.MID;
+							else return Student.Level.LOW;
+						}, toSet())));
+		
+		Set<String> keySet2 = stuByScoreGroup.keySet();
+		
+		for(String key : keySet2) {
+			System.out.println(key + stuByScoreGroup.get(key));
+		}
+	}
+
+}
+class Student {
+	String name;
+	boolean isMale;
+	int hak,ban,score;
+	
+	Student(String name, boolean isMale, int hak, int ban, int score){
+		this.name = name;
+		this.isMale = isMale;
+		this.hak = hak;
+		this.ban = ban;
+		this.score = score;
+	}
+	String getName() { return name; }
+	boolean isMale() { return isMale; }
+	int getHak() { return hak; }
+	int getBan() { return ban; }
+	int getScore() { return score; }
+	
+	public String toString() {
+		return String.format("[ %s, %s, %d학년, %d반, %3d점]",
+			name, isMale? "남":"여", hak, ban, score);
+	}
+	
+	enum Level { HIGH, MID, LOW }
+}
+```
+
+## Collector 구현하기
+컬렉터를 작성한다는 것은 Collector인터페이스를 구현한다는 것을 의미하는데,    
+Collector인터페이스는 다음과 같이 정의되어 있다.
+
+```java
+public interface Collector<T,A,R> {
+	Supplier<A> supplier();
+	BiConsumer<A,T> accumulator();
+	BinaryOperator<A> combiner();
+	Function<A, R> finisher();
+	
+	Set<Characteristics> characteristics();	//컬렉터의 특성이 담긴 Set을 반환
+	...
+}
+```
+
+직접 구현해야하는 것은 위의 5개 메서드인데, characteristics를 제외하면   
+모두 반환타입이 함수형 인터페이스이다. 즉, 4개의 람다식을 작성하면 된다.
+
+```
+supplier() 작업 결과를 저장할 공간을 제공
+accumulator() 스트림의 요소를 수집collect할 방법을 제공
+combiner() 두 저장공간을 병합할 방법을 제공 (병렬 스트림)
+finisher() 결과를 최종적으로 변환할 방법을 제공
+```
+
+supplier()는 수집 결과를 저장할 공간을 제공하기 위한 것이고,     
+accumulator()는 스트림의 요소를 어떻게 supplier()가 제공한 공간에 누적할 것인지를 정의한다.     
+combiner()는 병렬 스트림인 경우, 여러 쓰레드에 의해 처리된 결과를 어떻게 합칠 것인가를 정의한다.     
+finisher()는 작업결과를 반환하는 일을 하는데, 반환이 필요없다면 항등 함수인 Function.identity()를 반환하면 된다.    
+
+```java
+public Function finisher() {
+	return Function.identity();	//항등 함수를 반환. return x -> x와 동일
+}
+```
+마지막으로 characteristics()는 컬렉터가 수행하는 작업의 속성에 대한 정보를 제공하기 위한 것이다.    
+
+```
+Characteristics.CONCURRENT 병렬로 처리할 수 있는 작업
+Characteristics.UNORDERED 스트림의 요소의 순서가 유지될 필요가 없는 작업
+Characteristics.IDENTITY_FINISH finisher()가 항등 함수인 작업
+```
+위의 3가지 속성 중에서 해당하는 것을 다음과 같이 Set에 담아서 반환하도록 구현하면 된다.
+
+```java
+public Set<Characteristics> characteristics() {
+	return Collections.unmodifiableSet(EnumSet.of(
+		Collector.Characteristics.CONCURRENT,
+		Collector.Characteristics.UNORDERED
+	));
+}
+```
+
+만일 아무런 속성도 지정하고 싶지 않다면, 아래와 같이 하면 된다.
+
+```java
+Set<Characteristics> characteristics() {
+	return Collections.emptySet();	//지정할 특성이 없는 경우 비어있는 Set을 반환
+}
+```
+
+Collector도 내부적으로 처리하는 과정이 리듀싱과 같다.    
+IntStream의 count(), sum(), max(), min() 등이 reduce()로 구현되어 있는데,    
+collect()로도 count()등의 메서드와 같은 일을 할 수 있다.
+
+```java
+long count = stuStream.count();
+long count = stuStream.collect(counting());
+```
+collect()와 reduce()는 근본적으로 하는 일이 같다.    
+collect()는 그룹화와 분할, 집계 등에 유용하게 쓰이고, 병렬화에 있어 reduce()보다 유리하다.   
+아래는 String배열의 모든 문자열을 하나의 문자열로 합치는 예제이다.
+
+```java
+String[] strArr = {"aaa", "bbb", "ccc"};
+StringBuffer sb = new StringBuffer();	//supplier(), 저장할 공간을 생성
+
+for(String tmp : strArr)
+	sb.append(tmp);	//accumulator(), sb에 요소를 저장
+
+String result = sb.toString();	//finisher(), StringBuffer를 String으로 변환
+```
+
+```java
+public class CollectorEx1 {
+
+	public static void main(String[] args) {
+		String[] strArr = { "aaa", "bbb", "ccc"};
+		Stream<String> strStream = Stream.of(strArr);
+		
+		String result = strStream.collect(new ConcatCollector());
+		
+		System.out.println(Arrays.toString(strArr));
+		//[aaa, bbb, ccc]
+		System.out.println(result);
+		//aaabbbccc
+	}
+}
+class ConcatCollector implements Collector<String, StringBuilder, String>{
+
+	@Override
+	public Supplier<StringBuilder> supplier() {
+		return () -> new StringBuilder();
+		//return StringBuilder :: new;
+	}
+
+	@Override
+	public BiConsumer<StringBuilder, String> accumulator() {
+		return (sb, s) -> sb.append(s);
+		//return StringBuilder::append;
+	}
+
+	@Override
+	public BinaryOperator<StringBuilder> combiner() {
+		return (sb, sb2) ->sb.append(sb2);
+		//return StringBuilder::append;
+	}
+
+	@Override
+	public Function<StringBuilder, String> finisher() {
+		return sb -> sb.toString();
+		//return StringBuilder::toString;
+	}
+
+	@Override
+	public Set<Characteristics> characteristics() {
+		return Collections.emptySet();
+	}
+}
+```
