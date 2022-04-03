@@ -328,7 +328,7 @@ BufferedOutputStream의 버퍼에 남아있는 채로 프로그램이 종료될 
 > BufferedOutputStream의 close()는 flush()를 호출하여 버퍼의 내용을 출력 스트림에 쓰도록 한 후,     
 > BufferedOutputStream인스턴스의 참조변수에 null을 지정함으로써 사용하던 자원들이 반환되게 한다. 
 
-```jaca
+```java
 import java.io.*;
 
 public class BufferedOutputStreamEx1 {
