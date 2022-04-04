@@ -1132,4 +1132,4 @@ public class PrintStream extends FilterOutputStream implements Appendable, Close
 	}
 }
 ```
-> +""와 String.valueOf(i)는 같은 결과를 얻지만 String.valueOf(i)가 성능이 더 좋다.
+> i+""와 String.valueOf(i)는 같은 결과를 얻지만 String.valueOf(i)가 성능이 더 좋다.
