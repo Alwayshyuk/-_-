@@ -696,3 +696,440 @@ public class FilterOutputStream extends OutputStream {
 ```
 이처럼 보조스트림을 사용한 경우에는 기반스트림의 close()나 flush()를 호출할 필요없이     
 단순히 보조스트림의 close()를 호출하기만 하면 된다.
+
+## DataInputStream과 DataOutputStream
+
+DataInputStream/DataOutputStream도 각각 FilterInputStream/FilterOutputStream의 자손이며    
+DataInputStream은 DataInput인터페이스를, DataOutputStream은 DataOutput인터페이스를 각각 구현하였기 때문에,    
+데이터를 읽고 쓰는데 있어서 byte단위가 아닌, 8가지 기본 자료형의 단위로 읽고 쓸 수 있다는 장점이 있다.    
+DataOutputStream이 출력하는 형식은 각 기본 자료형 값을 16진수로 표현하여 저장한다.   
+예를 들어 int값을 출력한다면, 4byte의 16진수로 출력된다.    
+각 자료형의 크기가 다르므로, 출력한 데이터를 다시 읽어 올 때는 출력했을 때의 순서를 염두에 두어야 한다.
+
+```
+DataInputStream의 생성자와 메서드
+
+DataInputStream(InputStream in)
+주어진 InputStream인스턴스를 기반스트림으로 하는 DataInputStream인스턴스를 생성한다.
+
+boolean readBoolean()
+byte readByte()
+char readChar()
+short readShort()
+int readInt()
+long readLong()
+float readFloat()
+double readDouble()
+int readUnsignedByte()
+int readUnsignedShort()
+각 타입에 맞게 값을 읽어온다.
+더 이상 읽을 값이 없으면 EOFException을 발생시킨다.
+
+void realFully(byte[] b)
+void readFully(byte[] b, int off, int len)
+입력스트림에서 지정된 배열의 크기만큼 또는 지정된 위치에서 len만큼 데이터를 읽어온다.
+파일의 끝에 도달하면 EOFException이 발생하고, I/O에러가 발생하면 IOException n이 발생한다.
+
+String readUTF()
+UTF-8형식으로 쓰여진 문자를 읽는다.
+더 이상 읽을 값이 없으면 EOFException이 발생한다.
+
+static String readUTF(DataInput n)
+입력스트림in에서 UTF-8형식의 유니코드를 읽어온다.
+
+int skipByte(int n)
+현재 읽고 있는 위치에서 지정된 숫자n 만큼을 건너뛴다.
+```
+
+```
+DataOutputStream의 생성자와 메서드
+
+DataOutputStream(OutputStream out)
+주어진 OutputStream인스턴스를 기반스트림으로 하는 DataOutputStream인스턴스를 생성한다.
+
+void writeBoolean(boolean b)
+void writeByte(int b)
+void writeChar(int c)
+void writeChars(String s)
+void writeShort(int s)
+void writeInt(int i)
+void writeLong(long l)
+void writeFloat(float f)
+void writeDouble(double b)
+각 자료형에 알맞은 값들을 출력한다.
+
+void writeUTF(String s)
+UTF형식으로 문자를 출력한다.
+
+void writeChars(String s)
+주어진 문자열을 출력한다. writeChar(int c)메서드를 여러번 호출한 결과와 같다.
+
+int size()
+지금까지 DataOutputStream에 쓰여진 byte의 수를 알려준다.
+```
+
+```java
+public class DataOutputStreamEx1 {
+
+	public static void main(String[] args) {
+		FileOutputStream fos = null;
+		DataOutputStream dos = null;
+		
+		try {
+			fos = new FileOutputStream("sample.dat");
+			dos = new DataOutputStream(fos);
+			dos.writeInt(10);
+			dos.writeFloat(20.0f);
+			dos.writeBoolean(true);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+}
+```
+FileOutputStream을 기반으로 하는 DataOutputStream을 생성한 후,       
+DataOutputStreaam의 메서드들을 이용해서 sample.dat파일에 값들을 출력했다.   
+이 때 출력한 값들은 이진 데이터로 저장된다.      
+문자 데이터가 아니므로 문서 편집기로 sample.dat를 열어 봐도 알 수 없는 글자들로 이루어져 있을 것이다.     
+파일을 16진코드로 볼 수 있는 UltraEdit과 같은 프로그램이나 ByteArrayOutputStream을 사용하면 이진데이터를 확인할 수 있다.    
+
+```java
+public class DataOutputStreamEx2 {
+
+	public static void main(String[] args) {
+		ByteArrayOutputStream bos = null;
+		DataOutputStream dos = null;
+		
+		byte[] result = null;
+		
+		try {
+			bos = new ByteArrayOutputStream();
+			dos = new DataOutputStream(bos);
+			dos.writeInt(10);
+			dos.writeFloat(20.0f);
+			dos.writeBoolean(true);
+			
+			result = bos.toByteArray();
+			String[] hex = new String[result.length];
+			
+			for(int i=0; i<result.length;i++) {
+				if(result[i]<0) {
+					hex[i] = String.format("%02x", result[i]+256);
+				}else {
+					hex[i] = String.format("%02x", result[i]);
+				}
+			}
+			System.out.println(Arrays.toString(result));
+			System.out.println(Arrays.toString(hex));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+}
+
+[0, 0, 0, 10, 65, -96, 0, 0, 1]
+[00, 00, 00, 0a, 41, a0, 00, 00, 01]
+```
+
+이전의 예제를 변경해서 FileOutputStream대신 ByteArrayOutputStream을 사용하였다.    
+결과를 보며 첫 번째 4byte인 0,0,0,10은 writeInt(10)에 의해서 출력된 값이고,     
+두 번재 4byte인 65,-96,0,0은 writeFloat(20.0f)에 의해서 출력된 것이다.   
+그리고 마지막 1 byte인 1은 writeBoolean(true)에 의해서 출력된 것이다.    
+
+
+모든 bit의 값이 1인 1byte인 데이터가 있다고 할 때, 왼쪽에서 첫 번째 비트를 부호로 인식하지 않으면    
+부호 없는 1byte가 되어 범위는 0 ~ 255이므로 이 값은 최대값인 255가 되지만,     
+부호로 인식하는 경우 범위는 -128 ~ 127이 되고, 이 값은 0보다 1작은 값인 -1이 된다.    
+결국 같은 데이터이지만 자바의 자료형인 byte의 범위가 부호 있는 1byte 정수의 범위인 -128 ~ 127이기 때문에     
+-1로 인식한다는 것이다. 그래서 이 값을 0 ~ 255사이의 값으로 변환하려면 256을 더해줘야 한다.     
+예를 들어 -1의 경우 -1 + 255 = 255가 된다. 그리고 반대의 경우 256을 빼면 된다.    
+그 다음에 String.format()을 사용해서 10진 정수를 16진 정수로 변환하여 출력했다.    
+이처럼 ByteArrayInputStream/ByteArrayOutputStream을 사용하면 byte단위의 데이터 변환 및 조작이 가능하다.    
+
+> InputStream의 read()는 반환타입이 int이며 0~255의 값을 반환하므로 256을 더하거나 뺄 필요가 없다.     
+> 반면에 read(byte[] b)와 같이 byte배열을 사용하는 경우 상황에 따라 0~255범위의 값으로 변환해야할 필요가 있다.
+
+사실 DataInputStream에 의해서 어떻게 저장되는지 몰라도 DataOutputStream의 write메서드들로    
+기록한 데이터는 DataInputStream의 read메서드들로 읽기만 하면 된다.    
+이 때 여러 가지 종류의 자료형으로 출력을 했다면 읽을 때는 반드시 쓰인 순서대로 읽어야 한다.
+
+```java
+public class DataInputStreamEx1 {
+	public static void main(String[] args) {
+		try {
+			FileInputStream fis = new FileInputStream("sample.dat");
+			DataInputStream dis = new DataInputStream(fis);
+			
+			System.out.println(dis.readInt());
+			System.out.println(dis.readFloat());
+			System.out.println(dis.readBoolean());
+			dis.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+}
+10
+20.0
+true
+```
+
+sample.dat파일로부터 데이터를 읽어 올 때, 아무런 변환이나 자릿수를 셀 필요없이 단순히     
+readInt()와 같이 읽어 올 데이터의 타입에 맞는 메서드를 사용하기만 하면 된다.    
+
+
+문자로 데이터를 저장하면, 다시 데이터를 읽어 올 때 문자들을 실제 값으로 변환하는,    
+예를 들면 문자열 "100"을 숫자 100으로 변환하는, 과정을 거쳐야 하고,   
+또 읽어야 할 데이터의 개수를 결정해야하는 번거로움이 있다.     
+하지만 이처럼 DataInputStream과 DataOutputStream을 사용하면, 데이터를 변환할 필요도 없고,    
+자리수를 세어서 따지지 않아도 되므로 편리하고 빠르게 데이터를 저장하고 읽을 수 있게 된다.    
+
+```java
+public class DataOutputStreamEx3 {
+
+	public static void main(String[] args) {
+		int[] score = {100,90,95,85,50};
+		
+		try {
+			FileOutputStream fos = new FileOutputStream("score.dat");
+			DataOutputStream dos = new DataOutputStream(fos);
+			
+			for(int i =0; i<score.length;i++)
+				dos.writeInt(score[i]);
+			
+			dos.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+}
+```
+int형 배열 score의 값들을 DataOutputStream을 이용해서 score.dat파일에 출력하는 예제이다.    
+type명령으로 score.dat의 내용을 보면 숫자가 아니라 문자들이 나타나는데,    
+그 이유는 type명령이 파일의 내용을 문자로 변환해서 보여주기 때문이다.      
+int의 크기가 4 byte이므로 모두 20byte의 데이터가 저장되어 있다.
+
+```java
+import java.io.*;
+
+public class DataInputStreamEx2 {
+	public static void main(String[] args) {
+		int sum = 0;
+		int score = 0;
+		
+		FileInputStream fis = null;
+		DataInputStream dis = null;
+		
+		try {
+			fis = new FileInputStream("score.dat");
+			dis = new DataInputStream(fis);
+			
+			while(true) {
+				score = dis.readInt();
+				System.out.println(score);
+				sum += score;
+			}
+		} catch (EOFException e) {
+			System.out.printf("점수의 총합은 %d입니다.", sum);
+		} catch (IOException ie) {
+			ie.printStackTrace();
+		} finally {
+			try{
+				if(dis!=null)
+					dis.close();				
+			} catch (IOException ie) {
+				ie.printStackTrace();
+			}
+		}
+	}
+}
+100
+90
+95
+85
+50
+점수의 총합은 420입니다.
+```
+
+DataInputStream의 readInt()와 같이 데이터를 읽는 메서드는 더 이상 읽을 데이터가 없으면 EOFException을 발생시킨다.    
+그래서 다른 입력스트림들과는 달리 무한반복문과 EOFException을 처리하는 catch문을 이용해서 데이터를 읽는다.    
+원래 while문으로 작업을 마친 후에 스트림을 닫아 줘야 하는데,       
+while문이 무한 반복문이기 때문에 finally블럭에서 스트림을 닫도록 처리하였다.     
+참조변수 dis가 null일 때 close()를 호출하면 NullPointerException이 발생하므로    
+if문을 사용해서 dis가 null인지 체크한 후에 close()를 호출해야 한다.   
+그리고 close()는 IOException을 발생시킬 수 있으므로 try-catch블럭으로 감싸주었다.    
+
+
+지금까지는 try블럭내에서 스트림을 닫아주었지만, 작업도중에 예외가 발생해서 스트림을 닫지 못하고     
+try블럭을 빠져나갈 수 있기 때문에 이처럼 finally블럭을 이용해서 스트림을 닫아주는 것이 더 확실한 방법이다.    
+사실 프로그램이 종료될 때, 가비지 컬렉터가 사용하던 자원들을 모두 해제 해주기 때문에       
+이렇게 간단한 예제에서는 스트림을 닫지 않아도 별문제가 되지는 않는다.     
+그래도 가능하면 스트림을 사용한 직후에 바로 닫아서 자원을 반환하는 것이 좋다.     
+JDK1.7부터는 try-with-resources문을 이용해서 close()를 직접 호출하지 않아도 자동호출되도록 할 수 있다.    
+아래 예제는 앞의 예제를 try-with-resources문을 이용해서 변경한 것이다.
+
+```java
+public class DataInputStreamEx3 {
+	public static void main(String[] args) {
+		int sum = 0;
+		int score = 0;
+		
+		try(FileInputStream fis = new FileInputStream("score.dat");
+			DataInputStream dis = new DataInputStream(fis)) {
+			
+			while(true) {
+				score = dis.readInt();
+				System.out.println(score);
+				sum += score;
+			}
+		} catch (EOFException e) {
+			System.out.printf("점수의 총합은 %d입니다.", sum);
+		} catch (IOException ie) {
+			ie.printStackTrace();
+		}
+	}
+}
+```
+
+## SequenceInputStream
+SequenceInputStream은 여러 개의 입력스트림을 연속적으로 연결해서 하나의 스트림으로부터     
+데이터를 읽는 것과 같이 처리할 수 있도록 도와준다.     
+SequenceInputStream의 생성자를 제외하고 나머지 작업은 다른 입력스트림과 다르지 않다.    
+큰 파일을 여러 개의 작은 파일로 나누었다가 하나의 파일로 합치는 것과 같은 작업을 수행할 때 사용하면 좋다.    
+> SequenceInputStream은 다른 보조스트림들과는 달리 FilterInputStream의 자손이 아닌     
+> InputStream을 바로 상속받아서 구현하였다.
+
+```
+SequenceInputStream(Enumeration e)
+Enumeration에 저장된 순서대로 입력스트림을 하나의 스트림으로 연결한다.
+SequenceInputStream(InputStream s1, InputStream s2)
+두 개의 입력스트림을 하나로 연결한다.
+```
+
+Vector에 연결할 입력스트림들을 저장한 다음 Vector의 Enumeration elements()를 호출해서 생성자의 매개변수로 사용한다.
+
+```java
+사용 예1
+Vector files = new Vector();
+files.add(new FileInputStream("file.001"));
+files.add(new FileInputStream("file.002"));
+SequenceInputStream in = new SequenceInputStream(files.elements());
+
+사용 예2
+FileInputStream file1 = new FileInputStream("file.001");
+FileInputStream file2 = new FileInputStream("file.002");
+SequenceInputStream in = new SequenceInputStream(file1, file2);
+```
+
+```java
+public class SequenceInputStreamEx {
+
+	public static void main(String[] args) {
+		byte[] arr1 = {0,1,2};
+		byte[] arr2 = {3,4,5};
+		byte[] arr3 = {6,7,8};
+		byte[] outSrc = null;
+		
+		Vector v = new Vector();
+		v.add(new ByteArrayInputStream(arr1));
+		v.add(new ByteArrayInputStream(arr2));
+		v.add(new ByteArrayInputStream(arr3));
+		
+		SequenceInputStream input = new SequenceInputStream(v.elements());
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		
+		int data = 0;
+		
+		try {
+			while((data = input.read())!=-1) {
+				output.write(data);
+			}
+		} catch (IOException e) {}
+		outSrc = output.toByteArray();
+		
+		System.out.println(Arrays.toString(arr1));
+		System.out.println(Arrays.toString(arr2));
+		System.out.println(Arrays.toString(arr3));
+		System.out.println(Arrays.toString(outSrc));
+	}
+}
+[0, 1, 2]
+[3, 4, 5]
+[6, 7, 8]
+[0, 1, 2, 3, 4, 5, 6, 7, 8]
+```
+
+3개의 ByteArrayInputStream을 Vector와 SequenceInputStream을 이용해서 하나의 입력스트림처럼 다룰 수 있다.    
+Vector에 저장된 순서대로 입력되므로 순서에 주의하여야 한다.
+
+## PrintStream
+
+PrintStream은 데이터를 기반스트림에 다양한 형태로 출력할 수 있는       
+print, printf, println와 같은 메서드를 오버로딩하여 제공한다.     
+PrintStream은 데이터를 적절한 문자로 출력하는 것이기 때문에 문자기반 스트림의 역할을 수행한다.    
+그래서 JDK1.1에서 부터 PrintStream보다 향상된 기능의 문자기반 스트림인 PrintWriter가 추가되었으나    
+그 동안 빈번히 사용되던 System.out이 PrintStream이다 보니 둘 다 사용할 수 밖에 없게 되었다.    
+PrintStream과 PrintWriter는 거의 같은 기능을 가지고 있지만 PrintWriter가 PrintStream에 비해    
+다양한 언어의 문자를 처리하는데 적합하기 때문에 가능하면 PrintWriter를 사용하는 것이 좋다.    
+
+```
+PrintStream의 생성자와 메서드
+
+생성자
+PrintStream(File file)
+PrintStream(File file, String csn)
+PrintStream(OutputStream out)
+PrintStream(OutputStream out, boolean autoFlush)
+PrintStream(OutputStream out, boolean autoFlush, String encoding)
+PrintStream(String fileName)
+PrintStream(String fileName, String csn)
+지정된 출력스트림을 기반으로 하는 PrintStream인스턴스를 생성한다.
+autoFlush의 값을 true로 하면 println메서드가 호출되거나
+개행문자가 출력될 때 자동으로 flush된다. 기본값은 false이다.
+
+메서드
+boolean checkError()
+스트림을 flush하고 에러가 발생했는지를 알려준다.
+
+void print(...)
+void println(...)
+인자로 주어진 값을 출력소스에 문자로 출력한다.
+println메서드는 출력 후 줄바꿈을 하고, print메서드는 줄을 바꾸지 않는다.
+
+PrintStream printf(String format, Object...args)
+정형화된formatted출력을 가능하게 한다.
+
+protected void setError()
+작업 중에 오류가 발생했음을 알린다.
+setError()를 호출한 후에 checkError()를 호출하면 true를 반환한다.
+```
+
+print()나 println()을 이용해서 출력하는 중에 PrintStream의 기반스트림에서 IOException이 발생하면    
+checkError()를 통해서 인지할 수 있다.     
+println()이나 print()는 예외를 던지지 않고 내부에서 처리하도록 정의하였는데,   
+그 이유는 println()과 같은 메서드가 자주 사용되는 것이기 떄문이다.    
+만일 println()이 예외를 던지도록 정의되었다면 println()을 사용하는 모든 곳에 try-catch문을 사용해야 할 것이다.     
+
+```java
+public class PrintStream extends FilterOutputStream implements Appendable, Closeable{
+	...
+	private boolean trouble = false;
+	
+	public void print(int i) {
+		write(String.valueOf(i));	//write(i+"");와 같다.
+	}
+	private void write(String s){
+		try{
+			...
+		} catch(IOException x) {
+			trouble = true;
+		}
+	}
+	...
+	public boolean checkError(){
+		if(out != null) flush();
+		return trouble;
+	}
+}
+```
+> +""와 String.valueOf(i)는 같은 결과를 얻지만 String.valueOf(i)가 성능이 더 좋다.
