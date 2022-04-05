@@ -846,8 +846,8 @@ public class DataOutputStreamEx2 {
 그 다음에 String.format()을 사용해서 10진 정수를 16진 정수로 변환하여 출력했다.    
 이처럼 ByteArrayInputStream/ByteArrayOutputStream을 사용하면 byte단위의 데이터 변환 및 조작이 가능하다.    
 
-> InputStream의 read()는 반환타입이 int이며 0~255의 값을 반환하므로 256을 더하거나 뺄 필요가 없다.     
-> 반면에 read(byte[] b)와 같이 byte배열을 사용하는 경우 상황에 따라 0~255범위의 값으로 변환해야할 필요가 있다.
+> InputStream의 read()는 반환타입이 int이며 0 ~ 255의 값을 반환하므로 256을 더하거나 뺄 필요가 없다.     
+> 반면에 read(byte[] b)와 같이 byte배열을 사용하는 경우 상황에 따라 0 ~ 255범위의 값으로 변환해야할 필요가 있다.
 
 사실 DataInputStream에 의해서 어떻게 저장되는지 몰라도 DataOutputStream의 write메서드들로    
 기록한 데이터는 DataInputStream의 read메서드들로 읽기만 하면 된다.    
