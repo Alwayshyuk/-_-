@@ -1133,3 +1133,558 @@ public class PrintStream extends FilterOutputStream implements Appendable, Close
 }
 ```
 > i+""와 String.valueOf(i)는 같은 결과를 얻지만 String.valueOf(i)가 성능이 더 좋다.
+
+# 문자기반 스트림
+문자데이터를 다루는데 사용된다는 것을 제외하면 바이트기반 스트림과 사용방법은 거의 같다.
+
+## Reader와 Writer
+문자기반 스트림의 조상은 Reader/Writer이다.    
+byte배열 대신 char배열을 사용한다는 것 외에는 InputStream/OutputStream의 메서드와 다르지 않다.
+
+```
+Reader의 메서드
+
+abstract void close()
+입력스트림을 닫음으로써 사용하고 있던 자원을 반환한다ㅏ.
+
+void mark(int readlimit)
+현재 위치를 표시해놓는다. 후에 reset()에 의해서 표시해놓은 위치로 다시 돌아갈 수 있다.
+
+boolean markSupported()
+mark()와 reset()을 지원하는지를 알려준다.
+
+int read()
+입력소스로부터 하나의 문자를 읽어온다.
+char의 범위인 0~65535범위의 정수를 반환하며, 입력스트림의 마지막 데이터에 도달하면 -1을 반환한다.
+
+int read(char[] c)
+입력소스로부터 매개변수로 주어진 배열 c의 크기만큼 읽어서 배열 c에 저장한다. 읽어 온 데이터의 개수 또는 -1을 반환한다.
+
+abstract int read(char[] c, int off, int len)
+입력소스로부터 최대 len개의 문자를 읽어서, 배열 c의 지정된 위치off부터 읽은 만큼 저장한다.
+읽어 온 데이터의 개수 또는 -1을 반환한다.
+
+int read(CharBuffer target)
+입력소스로부터 읽어서 문자버퍼target에 저장한다.
+
+boolean ready()
+입력소스로부터 데이터를 읽을 준비가 되었는지 알려 준다.
+
+void reset()
+입력소스에서의 위치를 마지막으로 mark()가 호출되었던 위치로 되돌린다.
+
+long skip(long n)
+현재 위치에서 주어진 문자 수n만큼 건너뛴다.
+```
+
+```
+Writer의 메서드
+
+Writer append(char c)
+지정된 문자를 출력소스에 출력한다.
+
+Writer append(CharSequence c)
+지정된 문자열CharSequence을 출력소스에 출력한다.
+
+Writer append(CharSequence c, int start, int end)
+지정된 문자열CharSequence의 일부를 출력소스에 출력(CharBuffer, String, StringBuffer가 CharSequence를 구현)
+
+abstract void close()
+출력스트림을 닫음으로써 사용하고 있던 자원을 반환한다.
+
+abstract void flush()
+스트림의 버퍼에 있는 모든 내용을 출력소스에 쓴다.(버퍼가 있는 스트림에만 해당됨)
+
+void write(int b)
+주어진 값을 출력소스에 쓴다.
+
+void write(char[] c)
+주어진 배열 c에 저장된 모든 내용을 출력소스에 쓴다.
+
+abstract void write(char[] c, int off, int len)
+주어진 배열 c에 저장된 내용 중에서 off번째부터 len길이만큼만 출력소스에 쓴다.
+
+void write(String str)
+주어진 문자열str을 출력소스에 쓴다.
+
+void write(String str, int off, int len)
+주어진 문자열str의 일부를 출력소스에 쓴다.(off번째 문자부터 len개 만큼의 문자열)
+```
+
+문자기반 스트림은 단순히 2 byte로 스트림을 처리하는 것만을 의미하지는 않는다.    
+문자 데이터를 다루는데 필요한 또 하나의 정보는 인코딩이다.     
+문자기반 스트림, 즉 Reader/Writer 그리고 그 자손들은 여러 종류의 인코딩과 자바에서 사용하는 유니코드(UTF-16)간의 변환을 자동으로 처리해준다.    
+Reader는 특정 인코딩을 읽어서 유니코드로 변환하고 Writer는 유니코드를 특정 인코딩으로 변환하여 저장한다.
+
+## FileReader와 FileWriter
+FileReader/FileWriter는 파일로부터 텍스트데이터를 읽고, 파일에 쓰는데 사용된다.    
+
+```java
+public class FileReaderEx1 {
+
+	public static void main(String[] args) {
+		try {
+			String fileName = "test.txt";
+			FileInputStream fis = new FileInputStream(fileName);
+			FileReader fr = new FileReader(fileName);
+			
+			int data = 0;
+			//FileInputStream을 이용해서 파일내용을 읽어 화면에 출력한다.
+			while((data=fis.read())!=-1) {
+				System.out.println((char)data);
+			}
+			System.out.println();
+			fis.close();
+			
+			//FileReader를 이용해서 파일내용을 읽어 화면에 출력한다.
+			while((data=fr.read())!=-1){
+				System.out.println((char)data);
+			}
+			System.out.println();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+}
+```
+
+결과에서 알 수 있듯이 FileInputStream을 사용했을 때는 한글이 꺠져서 출력된다.
+
+```java
+public class FileConversion {
+
+	public static void main(String[] args) {
+		try {
+			FileReader fr = new FileReader(args[0]);
+			FileWriter fw = new FileWriter(args[1]);
+			
+			int data = 0;
+			while((data=fr.read())!=-1) {
+				if(data!='\t' && data!='\n' && data!=' ' && data !='\r')
+					fw.write(data);
+			}
+			fr.close();
+			fw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+}
+```
+파일의 공백을 모두 없애는 예제이다.    
+입력스트림으로부터 읽은 데이터를 변환해서 출력스트림에 쓰는 작업의 예를 보여주기 위한 것이다.
+
+## PipedReader와 PipedWriter
+PipedReader/PipedWriter는 쓰레드 간에 데이터를 주고받을 때 사용된다.    
+다른 스트릠과는 달리 입력과 출력스트림을 하나의 스트림으로 연결해서 데이터를 주고받는다는 특징이 있다.     
+스트림을 생성한 다음에 어느 한쪽 쓰레드에서 connect()를 호출해서 입력스트림과 출력스트림을 연결한다.     
+입출력을 마친 후에는 어느 한쪽 스트림만 닫아도 나머지 스트림을 자동으로 닫힌다.
+
+```java
+public class PipedReaderWriter {
+
+	public static void main(String[] args) {
+		InputThread inThread = new InputThread("InputThread");
+		OutputThread outThread = new OutputThread("OutputThread");
+		
+		inThread.connect(outThread.getOutput());
+		
+		
+		inThread.start();
+		outThread.start();
+	}
+}
+class InputThread extends Thread{
+	PipedReader input = new PipedReader();
+	StringWriter sw = new StringWriter();
+	
+	InputThread(String name){
+		super(name);	//Thread(String name)
+	}
+	
+	public void run() {
+		try {
+			int data=0;
+			while((data=input.read())!=-1) {
+				sw.write(data);
+			}
+			System.out.println(getName()+sw.toString());
+		} catch (Exception e) {}
+	}
+	public PipedReader getInput() {
+		return input;
+	}
+	public void connect(PipedWriter output) {
+		try {
+			input.connect(output);
+		} catch (Exception e) {}
+	}
+}
+class OutputThread extends Thread{
+	PipedWriter output = new PipedWriter();
+	
+	OutputThread(String name){
+		super(name);
+	}
+	
+	public void run() {
+		try {
+			String msg = "hello";
+			System.out.println(getName()+msg);
+			output.write(msg);
+			output.close();
+		} catch (Exception e) {}
+	}
+	
+	public PipedWriter getOutput() {
+		return output;
+	}
+	
+	public void connect(PipedReader input) {
+		try {
+			output.connect(input);
+		} catch (Exception e) {}
+	}
+}
+```
+두 쓰레드가 PipedReader/PipedWriter를 이용해서 서로 메시지를 주고받는 예제이다.    
+쓰레드를 시작하기 전에 PipedReader와 PipedWriter를 연결해야한다는 것에 유의해야 한다.    
+StringWriter는 CharArrayWriter처럼 메모리를 사용하는 스트림인데     
+내부적으로 String Buffer를 가지고 있어서 출력하는 내용이 여기에 저장된다.
+
+## StringReader와 StringWriter
+StringReader/StringWriter는 CharArrayReader/CharArrayWriter와 같이 입출력 대상이 메모리인 스트림이다.    
+StringWriter에 출력되는 데이터는 내부의 StringBuffer에 저장되며    
+StringWriter의 다음과 같은 메서드를 이용해서 저장된 데이터를 얻을 수 있다.
+
+```
+StringBuffer getBuffer()	StringWriter에 출력한 데이터가 저장된 StringBuffer를 반환한다.
+String toString()	StringWriter에 출력된(StringBuffer에 저장된) 문자열을 반환한다.
+```
+
+근본적으로 String도 char배열이지만, 아무래도 char배열보다는 String으로 처리하는 것이 편리한 경우가 많다.    
+
+```java
+public class StringReaderWriterEx {
+
+	public static void main(String[] args) {
+		String inputData = "ABCD";
+		StringReader input = new StringReader(inputData);
+		StringWriter output = new StringWriter();
+		
+		int data = 0;
+		
+		try {
+			while((data=input.read())!=-1) {
+				output.write(data);
+			}
+		} catch (IOException e) {}
+		
+		System.out.println(inputData);
+		System.out.println(output.toString());
+		System.out.println(output.getBuffer().toString());
+	}
+}
+ABCD
+ABCD
+ABCD
+```
+
+# 문자기반의 보조스트림
+
+## BufferedReader와 BufferedWriter
+BufferedReader/BufferedWriter는 버퍼를 이용해서 입출력의 효율을 높일 수 있도록 해주는 역할을 한다.   
+버퍼를 이용하면 입출력의 효율이 좋아지기 때문에 사용하는 것이 좋다.    
+BufferedReader의 readLine()을 사용하면 데이터를 라인단위로 읽을 수 있고
+BufferedWriter는 newLine()이라는 줄바꿈 메서드를 가지고 있다.   
+
+```java
+public class BufferedReaderEx1 {
+
+	public static void main(String[] args) {
+		try {
+			FileReader fr = new FileReader("BufferedReaderEx1.java");
+			BufferedReader br = new BufferedReader(fr);
+			
+			String line = "";
+			for(int i=1; (line=br.readLine())!=null; i++) {
+				//";"를 포함한 라인을 출력한다.
+				if(line.indexOf(";")!=-1)
+					System.out.println(i+":"+line);
+			}
+			br.close();
+		} catch (IOException e) {}
+	}
+}
+```
+BufferedReader의 readline()을 이용해서 파일의 라인 단위로 읽은 다음 indexOf()를 이용해서    
+";"를 포함하고 있는지 확인하여 출력하는 예제이다.    
+파일에서 특정 문자 또는 문자열을 포함한 라인을 쉽게 찾아낼 수 있음을 보여 준다.
+
+## InputStreamReader와 OutputStreamWriter
+
+InputStreamReader/OutputStreamWriter는 이름과 같이 바이트기반 스트림을 문자기반 스트림으로 연결시켜주는 역할을 한다.    
+그리고 바이트기반 스트림의 데이터를 지정된 인코딩의 문자데이터로 변환하는 작업을 수행한다.
+
+> InputStreamReader, OutputStreamWriter는 Reader,Writer의 자손이다.
+
+```
+InputStreamReader의 생성자와 메서드
+
+InputStreamReader(InputStream in)
+OS에서 사용하는 기본 인코딩의 문자로 변환하는 InputStreamReader를 생성한다.
+
+InputStreamReader(InputStream in, String encoding)
+지정된 인코딩을 사용하는 InputStreamReader를 생성한다.
+
+String getEncoding()
+InputStreamReader의 인코딩을 알려준다.
+```
+
+```
+OutputStreamWriter의 생성자와 메서드
+
+OutputStreamWriter(OutputStream out)
+OS에서 사용하는 기본 인코딩의 문자로 변환하는 OutputStreamWriter를 생성한다.
+
+OutputStreamWriter(OutputStream out, String encoding)
+지정된 인코딩을 사용하는 OutputStreamWriter를 생성한다.
+
+String getEncoding()
+OutputStreamWriter의 인코딩을 알려준다.
+```
+
+인코딩을 지정해 주지 않는다면 OS에서 사용하는 인코딩을 사용해 파일을 해석해서 보여 주기 때문에 원래 작성된 데로 볼 수 없다.    
+이와 마찬가지로 OutputStreamWriter를 이용해서 파일에 텍스트데이터를 저장할 때    
+생성자 OutputStreamWriter(OutputStream out, String encoding)를 이용해서 인코딩을 지정하지 않으면    
+OS에서 사용하는 인코딩으로 데이터를 저장할 것이다.    
+
+```java
+public class InputStreamReaderEx {
+	public static void main(String[] args) {
+		String line = "";
+		
+		try {
+			InputStreamReader isr = new InputStreamReader(System.in);
+			BufferedReader br = new BufferedReader(isr);
+			
+			System.out.println("사용중인 OS의 인코딩:"+isr.getEncoding());
+			
+			do {
+				System.out.println("문장을 입력하세요. 마치려면 q");
+				line = br.readLine();
+				System.out.println("입력한 문장: "+line);
+			} while(!line.equalsIgnoreCase("q"));
+		} catch (IOException e) {}
+	}
+}
+```
+
+# 표준입출력과 File
+
+## 표준입출력-System.in, System.out, System.err
+표준입출력은 콘솔을 통한 데이터 입력과 콘솔로의 데이터 출력을 의미한다.    
+자바에서는 표준 입출력standard IO을 위해 3가지 입출력 스트림, System.in, System.out, System.err을 제공하는데,    
+이들은 자바 어플리케이션의 실행과 동시에 사용할 수 있게 자동적으로 생성되기 때문에 개발자가 별도로 스트림을 생성하지 않아도 사용이 가능하다.    
+
+
+System클래스의 소스에서 알 수 있듯이 in, out, err은 System클래스에 선언된 클래스변수static변수이다.    
+선언부분만 봐서는 out, in, err의 타입은 InputStream과 PrintStream이지만     
+실제로는 버퍼를 이용하는 BufferedInputStream과 BufferedOutputStream의 인스턴스를 사용한다.      
+
+```java
+public final class System {
+	public final static InputStream in = nullInputStream();
+	public final static PrintStream out = nullPrintStream();
+	public final static PrintStream err = nullPrintStream();
+	...
+}
+```
+
+## 표준입출력의 대상변경-setOut(), setErr(), setIn()
+
+초기에는 System.in, System.out, System.err의 입출력대상이 콘솔화면이지만,    
+setIn(), setOut(), setErr()를 사용하면 입출력을 콘솔 이외에 다른 입출력 대상으로 변경하는 것이 가능하다.    
+
+```
+메서드: static void setOut(PrintStream out)
+설명: System.out의 출력을 지정된 PrintStream으로 변경
+
+메서드: static void setErr(PrintStream err)
+설명: System.err의 출력을 지정된 PrintStream으로 변경
+
+메서드: static void setIn(InputStream in)
+설명: System.in의 출력을 지정된 InputStream으로 변경
+```
+
+```java
+public class StandardIOEx3 {
+	public static void main(String[] args) {
+		PrintStream ps = null;
+		FileOutputStream fos = null;
+		
+		try {
+			fos = new FileOutputStream("test.txt");
+			ps = new PrintStream(fos);
+			System.setOut(ps); 	//System.out의 출력대상을 test.txt파일로 변경
+		} catch (FileNotFoundException e) {
+			System.out.println("File not found");
+		}
+		System.out.println("Hello by System.out");
+		System.err.println("Hello by System.err");
+	}
+}
+```
+System.out의 출력소스를 test.txt파일로 변경하였기 때문에 System.out을 이용한 출력은 모두 text.txt파일에 저장된다.   
+그래서 실행결과에는 System.err를 이용한 출력만 나타난다.    
+
+## RandomAccessFile
+자바에서는 입력과 출력이 각각 분리되어 별도로 작업을 하도록 설계되어 있는데,    
+RandomAccessFile만은 하나의 클래스로 파일에 대한 입력과 출력을 모두 할 수 있도록 되어 있다.    
+RandomAccessFile은 InputStream이나 OutputStream으로부터 상속받지 않고,    
+DataInput인터페이스와 DataOutput인터페이스를 모두 구현했기 때문에 읽기와 쓰기가 모두 가능하다.    
+사실 DataInputStream은 DataInput인터페이스를, DataOutputStream은 DataOutput 인터페이스를 구현했다.    
+이 두 클래스의 기본 자료형을 읽고 쓰기위한 메서드들은 모두 이 2개의 인터페이스에 정의되어있는 것들이다.    
+따라서 RandomAccessFile클래스도 DataInputStream과 DataOutputStream처럼 기본자료형 단위로 데이터를 읽고 쓸 수 있다.     
+RandomAccessFile의 가장 큰 장점은 파일의 어느 위치에나 읽기/쓰기가 가능하다는 것이다.     
+다른 입출력 클래스들은 입출력소스에 순차적으로 읽기/쓰기를 하기 때문에 읽기와 쓰기가 제한적인데 반해서    
+RandomAccessFile클래스는 파일에 읽고 쓰는 위치에 제한이 없다.   
+이것을 가능하게 하기 위해서 내부적으로 파일 포인터를 사용하는데, 입출력 시에 작업이 수행되는 곳이 파일 포인터가 위치한 곳이 된다.    
+파일 포인터의 위치는 파일의 제일 첫 부분(0)이며, 읽기 또는 쓰기를 수행할 때 마다 작업이 수행된 다음 위치로 이동하게 된다.    
+순차적으로 읽기나 쓰기를 한다면, 파일 포인터를 이동시키기 위해 별도의 작업이 필요하지 않지만,    
+파일의 임의의 위치에 있는 내용에 대해서 작업하고자 한다면, 먼저 파일 포인터를 원하는 위치로 옮긴 다음 작업을 해야 한다.   
+
+
+현재 작업 중인 파일에서 파일 포인터의 위치를 알고 싶을 때는 getFilePointer()를 사용하면 되고,    
+파일 포인터의 위치를 옮기기 위해서는 seek(long pos)나 skipByte(int n)를 사용하면 된다.
+
+```
+RandomAccessFile의 생성자와 메서드
+
+RandomAccessFile(File file, String mode)
+RandomAccessFile(String fileName, String mode)
+주어진 file에 읽기 또는 읽기와 쓰기를 하기 위한 RandomAccessFile인스턴스를 생성한다.
+mode의 값은 "r", "rw", "rws", "rwd"가 지정가능하다.
+"r"-파일로부터 읽기만을 수행할 때
+"rw"-파일에 읽기와 쓰기
+"rws"와 "rwd"는 기본적으로 "rw"와 같은데, 출력내용이 파일에 지연 없이 바로 쓰이게 한다.
+"rwd"는 파일 내용만, "rws"는 파일의 메타정보도 포함
+
+FileChannel getChannel()
+파일의 파일 채널을 반환한다.
+
+FileDescriptor getFD()
+파일의 파일 디스크립터를 반환
+
+long getFilePointer()
+파일 포인터의 위치를 알려 준다.
+
+long length()
+파일의 크기를 얻을 수 있다(단위 byte)
+
+void seek(long pos)
+파일 포인터의 위치를 변경한다.
+위치는 파일의 첫 부분부터 pos크기만큼 떨어진 곳이다.
+
+void SetLength(long newLength)
+파일의 크기를 지정된 길이로 변경한다.
+
+int skipBytes(int n)
+지정된 수만큼의 byte를 건너뛴다.
+```
+
+> RandomAccessFile의 인스턴스를 "rw"mode로 생성할 때, 지정된 파일이 없으면 새로운 파일을 생성한다.
+
+```java
+public class RandomAccessFileEx1 {
+
+	public static void main(String[] args) {
+		try {
+			RandomAccessFile raf = new RandomAccessFile("test.bat", "rw");
+			System.out.println(raf.getFilePointer());
+			raf.writeInt(100);
+			System.out.println(raf.getFilePointer());
+			raf.writeLong(100L);
+			System.out.println(raf.getFilePointer());
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+}
+0
+4
+12
+```
+
+int가 4byte이기 때문에 writeInt()를 호출한 다음 파일 포인터의 위치가 0에서 4로 바뀌었다.   
+마찬가지로 8byte인 long을 출력하는 writeLong()을 출력한 후에는 파일 포인터의 위치가 4에서 12로 변경되었다.
+
+```java
+public class RandomAccessFileEx2 {
+	public static void main(String[] args) {
+		int[] score= { 1, 100, 90, 90,
+						2, 70, 90, 100,
+						3, 100, 100, 100,
+						4, 70, 60, 80,
+						5, 70, 90, 100
+		};
+		try {
+			RandomAccessFile raf = new RandomAccessFile("score2.dat", "rw");
+			for(int i = 0; i<score.length; i++)
+				raf.writeInt(score[i]);
+			
+			while(true) {
+				System.out.println(raf.readInt());
+			}
+		} catch (EOFException e) {
+			//readInt()를 호출했을 때 더 이상 읽을 내용이 없으면 EOFException이 발생한다.
+		} catch (IOException io) {
+			io.printStackTrace();
+		}
+	}
+}
+```
+이 예제는 int배열 score에 저장된 데이터를 score2.bat에 저장하고 저장된 내용을 readInt()로 읽어서 출력하는 예제이다.   
+그러나 score2.dat파일은 생성되었지만 화면에는 아무것도 출력되지 않았다.    
+그 이유는 writeInt()를 수행하면서 파일포인터의 위치가 파일의 마지막으로 이동되었기 때문이다.    
+그 다음에 readInt()를 호출했으므로 파일의 앞부분이 아닌 마지막부분부터 읽기 시작하기 때문에 아무것도 읽지 못하고   
+EOFException이 발생해서 무한반복문을 벗어나게 된다.    
+그래서 아래와 같이 seek(long pos)를 이용해서 파일포인터의 위치를 다시 처음으로 이동시킨 다음 readInt()를 호출하도록 해야 한다.    
+
+```java
+raf.seek(0);
+while(true){
+	System.out.println(raf.readInt());
+}
+```
+
+이처럼 RandomAccessFile을 rw모드로 생성해서 작업할 때는 이러한 점을 염두에 두어야 한다.
+
+```java
+public class RandomAccessFileEx3 {
+
+	public static void main(String[] args) {
+		int sum = 0;
+		
+		try {
+			RandomAccessFile raf = new RandomAccessFile("score2.dat", "r");
+			int i =4;
+			
+			while(true) {
+				raf.seek(i);
+				sum += raf.readInt();
+				i+=16;
+			}
+		} catch (EOFException e) {
+			System.out.println(sum);
+		} catch (IOException io) {
+			io.printStackTrace();
+		}
+	}
+}
+410
+```
+이전 예제에서 데이터를 저장한 score2.dat파일에서 국어과목의 점수만을 합계를 내는 예제이다.     
+한 학생의 데이터가 번호와 3과목의 점수로 모두 4개의 int값(4 * 4=16byte)으로 되어 있기 때문에    
+i+16과 같이 파일 포인터의 값을 16씩 증가시켜가면서 readInt()를 호출 했다.
