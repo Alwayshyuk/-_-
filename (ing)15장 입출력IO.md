@@ -1688,3 +1688,322 @@ public class RandomAccessFileEx3 {
 이전 예제에서 데이터를 저장한 score2.dat파일에서 국어과목의 점수만을 합계를 내는 예제이다.     
 한 학생의 데이터가 번호와 3과목의 점수로 모두 4개의 int값(4 * 4=16byte)으로 되어 있기 때문에    
 i+16과 같이 파일 포인터의 값을 16씩 증가시켜가면서 readInt()를 호출 했다.
+
+## File
+자바에서는 File클래스를 통해서 파일과 디렉토리를 다룰 수 있도록 하고 있다.   
+그래서 File인스턴스는 파일일 수도 있고 디렉토리일 수도 있다.
+
+```
+File의 생성자와 경로와 관련된 메서드
+
+File(String fileName)
+주어진 문자열fileName을 이름으로 갖는 파일을 위한 File인스턴스를 생성한다.
+파일 뿐만 아니라 디렉토리도 같은 방법으로 다룬다.
+여기서 fileName은 주로 경로path를 포함해서 지정해주지만,
+파일 이름만 사용해도 되는데 이 경우 프로그램이 실행되는 위치가 경로로 간주된다.
+
+File(String pathName, String fileName)
+File(File pathName, String fileName)
+파일의 경로와 이름을 따로 분리해서 지정할 수 있도록 한 생성자.
+이 중 두 번째 것은 경로를 문자열이 아닌 File인스턴스인 경우를 위해서 제공된 것이다.
+
+File(URI uri)
+지정된 uri로 파일을 생성
+
+String getName()
+파일이름을 String으로 반환
+
+String getPath()
+파일의 경로path를 String으로 반환
+
+String getAbsolutePath()
+File getAbsoluteFile()
+파일의 절대경로를 String, File로 반환
+
+String getParent()
+File getParentFile()
+파일의 조상 디렉토리를 String, File로 반환
+
+String getCanonicalPath()
+File getCanonicalPath()
+파일의 정규경로를 String, File로 반환
+```
+
+```
+경로와 관련된 File의 멤버변수
+
+static String pathSeparator
+static char pathSeparatorChar
+OS에서 사용하는 경로 구분자. 윈도우";", 유닉스":"
+
+static String separator
+static cher separatorChar
+OS에서 사용하는 이름 구분자. 윈도우"\" 유닉스"/"
+```
+
+파일의 경로와 디렉토리나 파일의 이름을 구분하는데 사용되는 구분자가 OS마다 다를 수 있기 때문에,    
+OS독립적으로 프로그램을 작성하기 위해서는 반드시 위의 멤버변수들을 이용해야한다.    
+만일 윈도우에서 사용하는 구분자를 코드에 직접 적어놓았다면 다른 OS에서는 오류를 일으킬 수 있다.
+
+```java
+public class FileEx1 {
+
+	public static void main(String[] args) throws IOException {
+		File f = new File("C:\\Users\\kojie\\Downloads\\class\\github\\practice_\\-\\practice\\src\\tmp\\FileEx1.java");
+		String fileName = f.getName();
+		int pos = fileName.lastIndexOf(".");
+		
+		System.out.println("경로를 제외한 파일이름:"+f.getName());
+//경로를 제외한 파일이름:FileEx1.java
+		System.out.println("확장자를 제외한 파일이름:"+fileName.substring(0, pos));
+//확장자를 제외한 파일이름:FileEx1
+		System.out.println("확장자-"+fileName.substring(pos+1));
+//확장자-java
+		
+		System.out.println("경로를 포함한 파일이름:"+f.getPath());
+//경로를 포함한 파일이름:C:\Users\kojie\Downloads\class\github\practice_\-\practice\src\tmp\FileEx1.java
+		System.out.println("파일의 절대경로:"+f.getAbsolutePath());
+//파일의 절대경로:C:\Users\kojie\Downloads\class\github\practice_\-\practice\src\tmp\FileEx1.java
+		System.out.println("파일의 정규경로:"+f.getCanonicalPath());
+//파일의 정규경로:C:\Users\kojie\Downloads\class\github\practice_\-\practice\src\tmp\FileEx1.java
+		System.out.println("파일이 속해있는 디렉토리-"+f.getParent());
+//파일이 속해있는 디렉토리-C:\Users\kojie\Downloads\class\github\practice_\-\practice\src\tmp
+		System.out.println();
+		System.out.println("File.pathSeparator-"+File.pathSeparator);
+//File.pathSeparator-;
+		System.out.println("File.pathSeparator.Char-"+File.pathSeparatorChar);
+//File.pathSeparator.Char-;
+		System.out.println("File.separator-"+File.separator);
+//File.separator-\
+		System.out.println("File.separator-"+File.separatorChar);
+//File.separator-\
+		System.out.println();
+		System.out.println("user.dir="+System.getProperty("user.dir"));
+//user.dir=C:\Users\kojie\Downloads\class\github\practice_\-\practice
+		System.out.println("sun.boot.class.path="+System.getProperty("sun.boot.class.path"));
+//sun.boot.class.path=null
+	}
+}
+```
+File인스턴스를 생성하고 메서드를 이용해서 파일의 경로와 구분자 등의 정보를 출력하는 예제이다.     
+절대경로는 파일시스템의 루트로부터 시작하는 파일의 전체 경로를 의미한다.      
+OS에 따라 다르지만, 하나의 파일에 대해 둘 이상의 절대경로가 존재할 수 있다.    
+현재 디렉토리를 의미하는'.'와 같은 기호나 링크를 포함하고 있는 경우가 이에 해당한다.    
+그러나 정규경로는 기호나 링크 등을 포함하지 않는 유일한 경로를 의미한다.    
+시스템속성 중에서 user.dir의 값을 확인하면 현재 프로그램이 실행 중인 디렉토리를 알 수 있다.    
+그리고 우리가 OS의 시스템변수로 설정하는 classpath외에 sun.boot.class.path라는 시스템속성에    
+기본적인 classpath가 있어서 기본적인 경로들은 이미 설정되어 있다. 그래서 처음 JDK설치 후 classpath를 따로 지정해주지 않아도 되는 것이다.     
+
+```
+boolean canRead()
+읽을 수 있는 파일인지 검사한다.
+
+boolean canWrite()
+쓸 수 있는 파일인지 검사한다.
+
+boolean canExecute()
+실행할 수 있는 파일인지 검사한다.
+
+int compareTo(File pathname)
+주어진 파일 또는 디렉토리를 비교한다. 같으면 0을 반환하며, 다르면 1 또는 -1을 반환한다.
+
+boolean exists()
+파일이 존재하는지 검사한다.
+
+boolean isAbsolute()
+파일 또는 디렉토리가 절대경로명으로 지정되었는지 확인한다.
+
+boolean isDirectory()
+디렉토리인지 확인한다.
+
+boolean isFile()
+파일인지 확인한다.
+
+boolean isHidden()
+파일의 속성이 숨김인지 확인한다.
+파일이 존재하지 않으면 false를 반환한다.
+
+boolean createNewFile()
+아무런 내용이 없는 새로운 파일을 생성한다.
+생성하려는 파일이 이미 존재하면 생성되지 않는다.
+
+static File createTempFile(String prefix, String suffix, File directory)
+임시파일을 시스템의 지정된 디렉토리에 생성한다.
+
+boolean delete()
+파일을 삭제한다.
+
+void deleteOnExit()
+응용 프로그램 종료시 파일을 삭제한다.
+주로 실행 시 작업에 사용된 임시파일을 삭제하는데 사용된다.
+
+boolean equals(Object obj)
+주어진 객체(주로 File인스턴스)가 같은 파일인지 비교한다.
+
+long lastModified()
+파일의 마지막으로 수정된 시간을 반환
+
+long length()
+파일의 크기를 반환한다.
+
+String[] list()
+디렉토리의 파일목록(디렉토리 포함)을 String배열로 반환한다.
+
+String[] list(FilenameFilter filter)
+File[] list(FilenameFilter filter)
+FilenameFilter인스턴스에 구현된 조건에 맞는 파일을 String배열, File배열로 반환한다.
+
+File[] listFiles()
+File[] listFiles(FileFilter filter)
+File[] listFiles(FilenameFilter f)
+디렉토리의 파일목록(디렉토리 포함)을 File배열로 반환
+filter가 지정된 경우에는 filter의 조건과 일치하는 파일만 반환
+
+static File[] listRoots()
+long getFreeSpace()
+long getTotalSpace()
+long getUsableSpace()
+컴퓨터의 파일시스템의 root의 목록을 반환
+get으로 시작하는 메서드들은 File이 root일 때 
+비어있는 공간, 전체 공간, 사용가능한 공간을 바이트 단위로 변환
+
+boolean mkdir()
+boolean mkdirs()
+파일에 지정된 경로로 디렉토리를 생성.
+mkdirs는 필요하면 부모 디렉토리까지 생성
+
+boolean renameTo(File dest)
+지정된 파일dest로 이름을 변경
+
+boolean setExecutable(boolean executable)
+boolean setExecutable(boolean executable, boolean ownerOnly)
+boolean setReadable(boolean readable)
+boolean setReadable(boolean readable, boolean ownerOnly)
+boolean setReadOnly()
+boolean setWritable(boolean writable)
+boolean setWritable(boolean writable, boolean ownerOnly)
+파일의 속성을 변경한다.
+ownerOnly가 true면 파일의 소유자만 해당 속성을 변경할 수 있다.
+
+boolean setLastModified(long t)
+파일의 마지막으로 수정된 시간을 지정된 시간t로 변경
+
+Path toPath()
+파일을 Path로 변환해서 반환
+
+URI toURI()
+파일을 URI로 변환해서 반환
+```
+
+```java
+public class FileEx2 {
+	public static void main(String[] args) {
+		if(args.length!=1) {
+			System.out.println("USAGE: java FileEx2 DIRECTORY");
+			System.exit(0);
+		}
+		File f = new File(args[0]);
+		
+		if(!f.exists()||!f.isDirectory()) {
+			System.out.println("유효하지않은 디렉토리입니다.");
+			System.exit(0);
+		}
+		File[] files = f.listFiles();
+		
+		for(int i=0; i<files.length; i++) {
+			String fileName = files[i].getName();
+			System.out.println(
+					files[i].isDirectory()?"["+fileName+"]":fileName);
+		}
+	}
+}
+```
+지정한 디렉토리에 포함된 파일과 디렉토리의 목록을 보여주는 예제이다.
+
+```java
+public class FileEx3 {
+	static int totalFiles = 0;
+	static int totalDirs = 0;
+	public static void main(String[] args) {
+		if(args.length!=1) {
+			System.out.println("USAGE:java FileEx3 DIRECTORY");
+			System.exit(0);
+		}
+		
+		File dir = new File(args[0]);
+		if(!dir.exists()||!dir.isDirectory()) {
+			System.out.println("유효하지 않은 디렉토리입니다.");
+			System.exit(0);
+		}
+		printFileList(dir);
+		
+		System.out.println("총 "+totalFiles+" 개의 파일");
+		System.out.println("총 "+totalDirs+" 개의 디렉토리");
+	}
+	
+	public static void printFileList(File dir) {
+		System.out.println(dir.getAbsolutePath()+" 디렉토리");
+		File[] files = dir.listFiles();
+		
+		ArrayList subDir = new ArrayList();
+		
+		for(int i = 0; i<files.length; i++) {
+			String filename = files[i].getName();
+			
+			if(files[i].isDirectory()) {
+				filename = "["+filename+"]";
+				subDir.add(i+"");
+			}
+			System.out.println(filename);
+		}
+		int dirNum = subDir.size();
+		int fileNum = files.length-dirNum;
+		
+		totalFiles += fileNum;
+		totalDirs += dirNum;
+		
+		System.out.println(fileNum+"개의 파일"+dirNum+"개의 디렉토리");
+		System.out.println();
+		
+		for(int i =0; i<subDir.size(); i++) {
+			int index = Integer.parseInt((String)subDir.get(i));
+			printFileList(files[index]);
+		}
+	}
+}
+```
+서브디렉토리와 그에 포함된 파일과 디렉토리의 목록까지 보여주는 예제이다.    
+printFileList(File dir)는 디렉토리에 포함된 파일과 디렉토리의 목록을 출력하는 메서드인데 재귀호출을 이용하였다.    
+먼저 파일의 목록을 출력하고 디렉토리인 경우 ArrayList에 담았다가 각 디렉토리에 대해 printFileList(File dir)를 재귀호출한다.    
+
+```java
+public class FileEx4 {
+
+	public static void main(String[] args) {
+		String currDir = System.getProperty("user.dir");
+		File dir = new File(currDir);
+		
+		File[] files = dir.listFiles();
+		
+		for(int i =0; i<files.length; i++) {
+			File f = files[i];
+			String name = f.getName();
+			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm a");
+			String attribute = "";
+			String size = "";
+			
+			if(files[i].isDirectory()) {
+				attribute = "DIR";
+			}else {
+				size=f.length()+"";
+				attribute = f.canRead()?"R":" ";
+				attribute += f.canWrite()? "W" : " ";
+				attribute += f.isHidden()? "H": " ";
+			}
+			System.out.printf("%s %3s %6s %s\n",
+					df.format(new Date(f.lastModified())),attribute, size, name);
+		}
+	}
+}
+```
+현재 디렉토리에 속한 파일과 디렉토리의 이름과 크기 등 상세정보를 보여 주는 예제이다.
