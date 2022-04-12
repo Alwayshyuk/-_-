@@ -104,7 +104,7 @@ public String toString(){
 ## clone()
 > 자신을 복제하여 새로운 인스턴스를 생성하는 메서드이다.   
 > Object클래스에 정의된 clone()은 단순히 인스턴스변수의 값만 복사하기 때문에    
-> 참조 타입의 인스턴스 변수가 있는 클래슨는 완전한 인스턴스 복제가 이루어지지 않는다.   
+> 참조 타입의 인스턴스 변수가 있는 클래스는 완전한 인스턴스 복제가 이루어지지 않는다.   
 > 예를 들어 배열의 경우, 복제된 인스턴스도 같은 배열의 주소를 갖게 되므로   
 > 복제된 인스턴스의 작업이 원래의 인스턴스에 영향을 미치게 된다.    
 > 이런 경우 clone메서드를 오버라이딩해서 새로운 배열을 생성하고 배열의 내용을 복사한다.    
@@ -218,7 +218,7 @@ public final class String implements java.io.Serializable, Comparable {
     private char[] value;
 ```
 > 한번 생성된 String인스턴스가 갖고 있는 문자열은 읽어 올 수만 있고, 변경할 수는 없다.    
-> '+'연산자를 이용해서 무자열을 결합하는 경우     
+> '+'연산자를 이용해서 문자열을 결합하는 경우     
 >  인스턴스내의 문자열이 바뀌는 것이 아니라 새로운 문자열이 담긴 String인스턴스가 생성되는 것이다.    
 
 ## 문자열의 비교
@@ -1369,7 +1369,7 @@ BigDecimal divide(BigDecimal divisor, int scale, int roundingMode)
 BigDecimal divide(BigDecimal divisor, int scale, RoundingMode roundingMode)
 BigDecimal divide(BigDecimal divisor, MathContext mc)
 ```
-> roundingMode는 반올림 처리방법에 대한 것으로 BigDecimal에 정의된 'ROUND_'로 시작하는 상수들 중에 하나를 선택해서 사용하며 된다.   
+> roundingMode는 반올림 처리방법에 대한 것으로 BigDecimal에 정의된 'ROUND_'로 시작하는 상수들 중에 하나를 선택해서 사용하면 된다.   
 > RoundingMode는 이 상수들을 열거형으로 정의한 것이다.    
 > 1/3처럼 나눗셈한 결과가 무한소수인 경우, 반올림 모드를 지정해주지 않으면 ArithmeticException이 발생한다.
 
